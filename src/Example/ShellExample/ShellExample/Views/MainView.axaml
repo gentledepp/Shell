@@ -11,7 +11,7 @@
            HorizontalAlignment="Stretch"
            VerticalAlignment="Stretch"
            DefaultSideMenuSize="250"
-           DefaultRoute="/welcome"
+           DefaultRoute="/splash"
 
            SmallScreenSideMenuMode="Overlay"
            SmallScreenSideMenuBehave="Default"
@@ -28,7 +28,8 @@
 	</Design.DataContext>
 
 
-	<Route Path="welcome" Page="views:WelcomeView"></Route>
+	<Route Path="splash" Page="views:SplashView" Type="Modal"></Route>
+	<Route Path="welcome" Page="views:WelcomeView" Type="Modal"></Route>
 
 	<Host Path="main" Page="TabPage" Type="ReplaceRoot">
 		<Route Path="home" Page="views:HomePage">
