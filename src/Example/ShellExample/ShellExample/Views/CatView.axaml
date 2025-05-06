@@ -3,19 +3,74 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	  xmlns:i="https://github.com/projektanker/icons.avalonia"
-      mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+	  xmlns:generic="clr-namespace:System.Collections.Generic;assembly=System.Collections"
+	  xmlns:system="clr-namespace:System;assembly=System.Runtime"
+	  mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
       x:Class="ShellExample.Views.CatView"
       NavigationBar.Header="Cats">
-	<Grid>
-		<Border HorizontalAlignment="Center"
-		        VerticalAlignment="Center"
-		        Width="250"
-		        Height="250"
-		        Opacity="0.2"
-		        CornerRadius="20"
-		        Background="Black">
-			<i:Icon Value="fa-solid fa-cat" FontSize="180" />
-		</Border>
-	</Grid>
+    <Page.Resources>
+        <generic:List x:TypeArguments="system:String" x:Key="Cats">
+            <x:String>Abyssinian</x:String>
+            <x:String>American Bobtail</x:String>
+            <x:String>American Curl</x:String>
+            <x:String>American Shorthair</x:String>
+            <x:String>American Wirehair</x:String>
+            <x:String>Balinese</x:String>
+            <x:String>Bengal</x:String>
+            <x:String>Birman</x:String>
+            <x:String>Bombay</x:String>
+            <x:String>British Shorthair</x:String>
+            <x:String>Burmese</x:String>
+            <x:String>Chartreux</x:String>
+            <x:String>Cornish Rex</x:String>
+            <x:String>Devon Rex</x:String>
+            <x:String>Egyptian Mau</x:String>
+            <x:String>Exotic Shorthair</x:String>
+            <!--<x:String>Havana Brown</x:String>
+            <x:String>Himalayan</x:String>
+            <x:String>Japanese Bobtail</x:String>
+            <x:String>Korat</x:String>
+            <x:String>Maine Coon</x:String>
+            <x:String>Manx</x:String>
+            <x:String>Nebelung</x:String>
+            <x:String>Norwegian Forest Cat</x:String>
+            <x:String>Ocicat</x:String>
+            <x:String>Oriental</x:String>
+            <x:String>Persian</x:String>
+            <x:String>Ragamuffin</x:String>
+            <x:String>Ragdoll</x:String>
+            <x:String>Russian Blue</x:String>
+            <x:String>Savannah</x:String>
+            <x:String>Scottish Fold</x:String>
+            <x:String>Siamese</x:String>
+            <x:String>Siberian</x:String>
+            <x:String>Singapura</x:String>
+            <x:String>Somali</x:String>
+            <x:String>Sphynx</x:String>
+            <x:String>Tonkinese</x:String>
+            <x:String>Turkish Angora</x:String>
+            <x:String>Turkish Van</x:String>-->
+        </generic:List>
+
+    </Page.Resources>
+    <ListBox
+        ItemsSource="{StaticResource Cats}">
+        <ListBox.ItemTemplate>
+            <DataTemplate>
+                <Border HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Width="250"
+                        Height="250"
+                        Opacity="0.2"
+                        CornerRadius="20"
+                        Background="Red">
+                    <StackPanel>
+                        <i:Icon Value="fa-solid fa-cat" FontSize="180" />
+                        <TextBlock Text="{Binding .}" />
+                    </StackPanel>
+                </Border>
+            </DataTemplate>
+        </ListBox.ItemTemplate>
+    </ListBox>
 </Page>
 

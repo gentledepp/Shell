@@ -3,19 +3,83 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	  xmlns:i="https://github.com/projektanker/icons.avalonia"
-      mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+	  xmlns:system="clr-namespace:System;assembly=System.Runtime"
+	  xmlns:generic="clr-namespace:System.Collections.Generic;assembly=System.Collections"
+	  mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
       x:Class="ShellExample.Views.DogView"
       NavigationBar.Header="Dog">
-	<Grid>
-		<Border HorizontalAlignment="Center"
-		        VerticalAlignment="Center"
-		        Width="250"
-		        Height="250"
-		        Opacity="0.2"
-		        CornerRadius="20"
-		        Background="Black">
-			<i:Icon Value="fa-solid fa-dog" FontSize="180" />
-		</Border>
-	</Grid>
+
+    <Page.Resources>
+        <generic:List x:TypeArguments="system:String" x:Key="Dogs">
+            <x:String>Afghan Hound</x:String>
+            <x:String>Alaskan Malamute</x:String>
+            <x:String>American Bulldog</x:String>
+            <x:String>Australian Shepherd</x:String>
+            <x:String>Basenji</x:String>
+            <x:String>Basset Hound</x:String>
+            <x:String>Beagle</x:String>
+            <x:String>Bernese Mountain Dog</x:String>
+            <x:String>Bichon Frise</x:String>
+            <x:String>Border Collie</x:String>
+            <x:String>Boston Terrier</x:String>
+            <x:String>Boxer</x:String>
+            <x:String>Bulldog</x:String>
+            <x:String>Cavalier King Charles Spaniel</x:String>
+            <x:String>Chihuahua</x:String>
+            <x:String>Chow Chow</x:String>
+            <x:String>Cocker Spaniel</x:String>
+            <x:String>Collie</x:String>
+            <x:String>Corgi</x:String>
+            <x:String>Dachshund</x:String>
+            <x:String>Dalmatian</x:String>
+            <x:String>Doberman Pinscher</x:String>
+            <x:String>English Setter</x:String>
+            <x:String>French Bulldog</x:String>
+            <!--<x:String>German Shepherd</x:String>
+            <x:String>Golden Retriever</x:String>
+            <x:String>Great Dane</x:String>
+            <x:String>Greyhound</x:String>
+            <x:String>Husky</x:String>
+            <x:String>Irish Setter</x:String>
+            <x:String>Jack Russell Terrier</x:String>
+            <x:String>Labrador Retriever</x:String>
+            <x:String>Maltese</x:String>
+            <x:String>Mastiff</x:String>
+            <x:String>Newfoundland</x:String>
+            <x:String>Pomeranian</x:String>
+            <x:String>Poodle</x:String>
+            <x:String>Pug</x:String>
+            <x:String>Rottweiler</x:String>
+            <x:String>Saint Bernard</x:String>
+            <x:String>Samoyed</x:String>
+            <x:String>Schnauzer</x:String>
+            <x:String>Shar Pei</x:String>
+            <x:String>Shiba Inu</x:String>
+            <x:String>Shih Tzu</x:String>
+            <x:String>Weimaraner</x:String>
+            <x:String>Whippet</x:String>
+            <x:String>Yorkshire Terrier</x:String>-->
+        </generic:List>
+
+    </Page.Resources>
+    <ListBox
+        ItemsSource="{StaticResource Dogs}">
+        <ListBox.ItemTemplate>
+            <DataTemplate>
+                <Border HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Width="250"
+                        Height="250"
+                        Opacity="0.2"
+                        CornerRadius="20"
+                        Background="Green">
+                    <StackPanel>
+                        <i:Icon Value="fa-solid fa-dog" FontSize="180" />
+                        <TextBlock Text="{Binding .}" />
+                    </StackPanel>
+                </Border>
+            </DataTemplate>
+        </ListBox.ItemTemplate>
+    </ListBox>
 </Page>
 
