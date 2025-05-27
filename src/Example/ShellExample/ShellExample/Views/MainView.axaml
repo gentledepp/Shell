@@ -49,6 +49,7 @@
 	</Host>
 
 	<Route Path="second" Page="views:SecondView"></Route>
+	<Route Path="sidemenuoverride" Page="views:SideMenuOverrideDemoPage"></Route>
 
 	<SideMenuItem Path="/main/home" Title="Home">
 		<SideMenuItem.Icon>
@@ -78,6 +79,11 @@
 	<SideMenuItem Path="/second" Title="Second Click">
 		<SideMenuItem.Icon>
 			<views:FontIconImageSource Value="fa-solid fa-check" Brush="{DynamicResource ButtonForeground}" />
+		</SideMenuItem.Icon>
+	</SideMenuItem>
+	<SideMenuItem Path="/sidemenuoverride" Title="SideMenu Override Demo">
+		<SideMenuItem.Icon>
+			<views:FontIconImageSource Value="fa-solid fa-wand-magic-sparkles" Brush="{DynamicResource ButtonForeground}" />
 		</SideMenuItem.Icon>
 	</SideMenuItem>
 

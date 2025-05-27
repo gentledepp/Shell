@@ -1,0 +1,14 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="ShellExample.Views.SideMenuOverrideDemoPage">
+    <StackPanel Spacing="10" Margin="20">
+        <TextBlock FontSize="20" FontWeight="Bold">Side Menu Override Demo Page</TextBlock>
+        <TextBlock TextWrapping="Wrap">
+            This page demonstrates overriding the ShellView's side menu. Click the button below to toggle a custom side menu.
+        </TextBlock>
+        <Button Name="ToggleOverrideButton" Content="Toggle Custom Side Menu" />
+    </StackPanel>
+</UserControl>
