@@ -9,6 +9,6 @@
         <TextBlock TextWrapping="Wrap">
             This page demonstrates overriding the ShellView's side menu. Click the button below to toggle a custom side menu.
         </TextBlock>
-        <Button Name="ToggleOverrideButton" Content="Toggle Custom Side Menu" />
+        <Button Name="ToggleOverrideButton" Content="Toggle Custom Side Menu" Click="ToggleOverrideButton_Click" />
     </StackPanel>
 </UserControl>

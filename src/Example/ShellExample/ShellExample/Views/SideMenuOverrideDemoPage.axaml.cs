@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Controls.Primitives; // Required for TemplateAppliedEventArgs
@@ -11,7 +12,6 @@ namespace ShellExample.Views
 {
     public partial class SideMenuOverrideDemoPage : UserControl
     {
-        private Button? _toggleOverrideButton;
         private bool _isOverrideActive = false;
         private Control? _overrideContent;
         private IDataTemplate? _overrideTemplate;
@@ -57,19 +57,6 @@ namespace ShellExample.Views
                 }, true); // true for "supports recycling"
         }
 
-        protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
-        {
-            base.OnApplyTemplate(e);
-
-            _toggleOverrideButton = e.NameScope.Find<Button>("ToggleOverrideButton");
-
-            if (_toggleOverrideButton != null)
-            {
-                _toggleOverrideButton.Click += ToggleOverrideButton_Click;
-                _toggleOverrideButton.Content = "Show Custom Side Menu"; // Initial state
-            }
-        }
-
         private void ToggleOverrideButton_Click(object? sender, RoutedEventArgs e)
         {
             _isOverrideActive = !_isOverrideActive;
@@ -78,13 +65,11 @@ namespace ShellExample.Views
             {
                 ShellView.SetSideMenuOverrideItem(this, _overrideContent);
                 ShellView.SetSideMenuOverrideItemTemplate(this, _overrideTemplate);
-                if (_toggleOverrideButton != null) _toggleOverrideButton.Content = "Hide Custom Side Menu";
             }
             else
             {
                 ShellView.SetSideMenuOverrideItem(this, null);
                 ShellView.SetSideMenuOverrideItemTemplate(this, null);
-                if (_toggleOverrideButton != null) _toggleOverrideButton.Content = "Show Custom Side Menu";
             }
         }
     }
