@@ -38,7 +38,8 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
         Default,
         Keep,
         Closed,
-        Removed
+        Removed,
+        Override
     }
 
     #endregion

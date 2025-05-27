@@ -249,6 +249,34 @@ public partial class ShellView
 
 	#endregion
 
+	#region SideMenuOverrideItemProperty
+
+	public static readonly AttachedProperty<object?> SideMenuOverrideItemProperty =
+		AvaloniaProperty.RegisterAttached<ShellView, AvaloniaObject, object?>("SideMenuOverrideItem",
+			defaultValue: null);
+
+	public static object? GetSideMenuOverrideItem(AvaloniaObject element) =>
+		element.GetValue(SideMenuOverrideItemProperty);
+
+	public static void SetSideMenuOverrideItem(AvaloniaObject element, object? parameter) =>
+		element.SetValue(SideMenuOverrideItemProperty, parameter);
+
+	#endregion
+
+	#region SideMenuOverrideItemTemplateProperty
+
+	public static readonly AttachedProperty<IDataTemplate?> SideMenuOverrideItemTemplateProperty =
+		AvaloniaProperty.RegisterAttached<ShellView, AvaloniaObject, IDataTemplate?>("SideMenuOverrideItemTemplate",
+			defaultValue: null);
+
+	public static IDataTemplate? GetSideMenuOverrideItemTemplate(AvaloniaObject element) =>
+		element.GetValue(SideMenuOverrideItemTemplateProperty);
+
+	public static void SetSideMenuOverrideItemTemplate(AvaloniaObject element, IDataTemplate? parameter) =>
+		element.SetValue(SideMenuOverrideItemTemplateProperty, parameter);
+
+	#endregion
+
 	#endregion
 
 	#region Behavior
@@ -261,40 +289,101 @@ public partial class ShellView
 
 	protected virtual void UpdateSideMenu()
 	{
-		if (_splitView == null || NavigationBar == null) return;
+		// Initial null checks for essential components
+		if (_splitView == null || _sideMenu == null || NavigationBar == null) return;
 
-		switch (GetCurrentBehave())
+		// Retrieve the current view. 
+		// If it's null, GetCurrentBehave will rely on screen size.
+		// The Override case specifically checks if 'view' is a StyledElement.
+		var view = _contentView?.CurrentView;
+		var currentBehave = GetCurrentBehave();
+
+		if (currentBehave == SideMenuBehaveType.Override)
 		{
-			case SideMenuBehaveType.Default:
-				_splitView.OpenPaneLength = SideMenuPresented ? SideMenuSize : 0;
-				_splitView.IsPaneOpen = SideMenuPresented;
-				NavigationBar.HasSideMenuOption = true;
-				break;
-			case SideMenuBehaveType.Keep:
+			// Attempt to apply Override behavior
+			if (view is StyledElement element)
+			{
+				_sideMenu.IsVisible = true;
+				var overrideItem = GetSideMenuOverrideItem(element);
+				var overrideTemplate = GetSideMenuOverrideItemTemplate(element);
+
+				_sideMenu.Items = null; // Hide default menu items
+				_sideMenu.Header = null;
+				_sideMenu.Footer = null;
+				_sideMenu.Contents = new AvaloniaList<object?> { overrideItem };
+				_sideMenu.ContentsTemplate = overrideTemplate;
+
 				_splitView.OpenPaneLength = SideMenuSize;
 				_splitView.IsPaneOpen = true;
+				_splitView.CompactPaneLength = 0; // Specific for Override
 				NavigationBar.HasSideMenuOption = false;
-				break;
-			case SideMenuBehaveType.Closed:
-				_splitView.OpenPaneLength = 0;
-				_splitView.IsPaneOpen = true;
-				NavigationBar.HasSideMenuOption = true;
-				break;
-            case SideMenuBehaveType.Removed:
-				_splitView.OpenPaneLength = 0;
-				_splitView.CompactPaneLength = 0;
-                _splitView.IsPaneOpen = false;
-                NavigationBar.HasSideMenuOption = false;
-                break;
-        }
+			}
+			else
+			{
+				// If view is not suitable for Override (e.g., null or not a StyledElement),
+				// fall back to Default behavior.
+				currentBehave = SideMenuBehaveType.Default;
+			}
+		}
+
+		// Handling for non-Override cases OR if Override has fallen back to Default
+		if (currentBehave != SideMenuBehaveType.Override)
+		{
+			// Reset _sideMenu to its default configuration using ShellView properties
+			_sideMenu.Items = _sideMenuItems;
+			_sideMenu.Header = GetValue(SideMenuHeaderProperty);
+			_sideMenu.Footer = GetValue(SideMenuFooterProperty);
+			_sideMenu.Contents = GetValue(SideMenuContentsProperty);
+			_sideMenu.ContentsTemplate = GetValue(SideMenuContentsTemplateProperty);
+
+			// Reset _splitView.CompactPaneLength to its default value.
+			// DefaultSideMenuSize is a property on ShellView providing the default size.
+			_splitView.CompactPaneLength = DefaultSideMenuSize;
+
+			// Apply specific settings based on the (potentially reassigned) currentBehave
+			switch (currentBehave)
+			{
+				case SideMenuBehaveType.Default:
+					_splitView.OpenPaneLength = SideMenuPresented ? SideMenuSize : 0;
+					_splitView.IsPaneOpen = SideMenuPresented;
+					NavigationBar.HasSideMenuOption = true;
+					_sideMenu.IsVisible = SideMenuPresented; // Visibility depends on presentation state
+					break;
+				case SideMenuBehaveType.Keep:
+					_splitView.OpenPaneLength = SideMenuSize;
+					_splitView.IsPaneOpen = true;
+					NavigationBar.HasSideMenuOption = false;
+					_sideMenu.IsVisible = true;
+					break;
+				case SideMenuBehaveType.Closed:
+					_splitView.OpenPaneLength = 0;
+					_splitView.IsPaneOpen = true; // Pane is open but effectively shows compact or nothing
+					NavigationBar.HasSideMenuOption = true;
+					_sideMenu.IsVisible = true;
+					break;
+				case SideMenuBehaveType.Removed:
+					_splitView.OpenPaneLength = 0;
+					_splitView.CompactPaneLength = 0; // Specific for Removed
+					_splitView.IsPaneOpen = false;
+					NavigationBar.HasSideMenuOption = false;
+					_sideMenu.IsVisible = false;
+					break;
+			}
+		}
 	}
 
 	private SideMenuBehaveType GetCurrentBehave()
 	{
 		var view = this._contentView?.CurrentView;
 
-		if (view is StyledElement element && GetOverrideSideMenuBehave(element) is { } overrideBehave)
-			return overrideBehave;
+		if (view is StyledElement element)
+		{
+			if (GetSideMenuOverrideItem(element) != null)
+				return SideMenuBehaveType.Override;
+
+			if (GetOverrideSideMenuBehave(element) is { } overrideBehave)
+				return overrideBehave;
+		}
 
 		return ScreenSize switch
 		{

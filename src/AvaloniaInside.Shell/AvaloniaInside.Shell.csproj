@@ -14,6 +14,9 @@
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>
+	<ItemGroup>
+		<InternalsVisibleTo Include="AvaloniaInside.Shell.Tests" />
+	</ItemGroup>
 	<PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 	</PropertyGroup>
