@@ -53,8 +53,6 @@
 	<!-- Navigation Cancellation Demo Routes -->
 	<Route Path="cancellation-demo" Page="views:NavigationCancellationDemoPage"></Route>
 	<Route Path="navigate-cancelled" Page="views:NavigateCancelledPage"></Route>
-	<Route Path="navigate-and-wait-cancelled" Page="views:NavigateAndWaitCancelledPage"></Route>
-	<Route Path="cancellation-helper" Page="views:CancellationHelperPage"></Route>
 
 	<SideMenuItem Path="/main/home" Title="Home">
 		<SideMenuItem.Icon>

@@ -15,17 +15,10 @@ public partial class Navigator : INavigator
     private readonly INavigationViewLocator _viewLocator;
     private readonly NavigationStack _stack;
     private readonly Dictionary<NavigationChain, TaskCompletionSource<NavigateResult>> _waitingList = new();
-    private readonly ConcurrentDictionary<NavigationChain, CancellationTokenSource> _navigationCancellationTokens = new();
 
     private bool _navigating;
     private ShellView? _shellView;
-    private CancellationTokenSource _currentNav;
-    
-    // AsyncLocal approach for managing nested NavigateAndWaitAsync calls
-    private static readonly AsyncLocal<Stack<CancellationTokenSource>> _nestedNavigationStack = new();
-    
-    private static Stack<CancellationTokenSource> NestedNavigationStack => 
-        _nestedNavigationStack.Value ??= new Stack<CancellationTokenSource>();
+    private CancellationTokenSource? _currentNavigationCancellationToken;
 
     public ShellView ShellView => _shellView ?? throw new ArgumentNullException(nameof(ShellView));
 
@@ -91,7 +84,7 @@ public partial class Navigator : INavigator
             !origin.AbsolutePath.Equals(newUri.AbsolutePath) && Registrar.TryGetNode(origin.AbsolutePath, out var originalNode)
                 ? navigateType ?? originalNode.Navigate
                 : navigateType ?? node.Navigate;
-        
+
         var fromPage = _stack.Current?.Instance as INavigatorLifecycle;
         if (fromPage != null)
         {
@@ -176,10 +169,10 @@ public partial class Navigator : INavigator
 
     private void SetupPage(NavigationChain chain)
     {
-	    if (chain.Instance is not Page page) return;
+        if (chain.Instance is not Page page) return;
 
-	    page.Shell = ShellView;
-	    page.Chain = chain;
+        page.Shell = ShellView;
+        page.Chain = chain;
     }
 
     private async Task SwitchHostedItem(
@@ -248,7 +241,7 @@ public partial class Navigator : INavigator
 
         try
         {
-            _currentNav = cts;
+            _currentNavigationCancellationToken = cts;
 
             var originalUri = new Uri(CurrentUri, path);
             var newUri = await _navigateStrategy.NavigateAsync(_stack.Current, CurrentUri, path, cts.Token);
@@ -258,7 +251,7 @@ public partial class Navigator : INavigator
         }
         finally
         {
-            _currentNav = null;
+            _currentNavigationCancellationToken = null;
         }
     }
 
@@ -286,30 +279,8 @@ public partial class Navigator : INavigator
         IPageTransition? overrideTransition,
         CancellationToken cancellationToken = default)
     {
-        // Cancel current NavigateAsync if in progress
-        if (_currentNav is { } cts && !cts.IsCancellationRequested)
-        {
+        if (_currentNavigationCancellationToken is { } cts && !_currentNavigationCancellationToken.IsCancellationRequested)
             await cts.CancelAsync();
-        }
-
-        // Cancel nested NavigateAndWaitAsync calls
-        while (NestedNavigationStack.Count > 0)
-        {
-            var nestedCts = NestedNavigationStack.Pop();
-            if (!nestedCts.IsCancellationRequested)
-            {
-                await nestedCts.CancelAsync();
-            }
-        }
-
-        // Cancel any pending NavigateAndWaitAsync for current chain
-        if (_stack.Current != null && _navigationCancellationTokens.TryRemove(_stack.Current, out var chainCts))
-        {
-            if (!chainCts.IsCancellationRequested)
-            {
-                await chainCts.CancelAsync();
-            }
-        }
 
         var newUri = await _navigateStrategy.BackAsync(_stack.Current, CurrentUri, cancellationToken);
         if (newUri != null && CurrentUri.AbsolutePath != newUri.AbsolutePath)
@@ -367,56 +338,45 @@ public partial class Navigator : INavigator
     {
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         
-        // Push to nested navigation stack for proper cancellation handling
-        NestedNavigationStack.Push(cts);
-        
+        _currentNavigationCancellationToken = cts;
+        NavigationChain? chain = null;
+        TaskCompletionSource<NavigateResult>? tcs = null;
+
         try
         {
+
             var originalUri = new Uri(CurrentUri, path);
+
             var newUri = await _navigateStrategy.NavigateAsync(_stack.Current, CurrentUri, path, cts.Token);
             if (CurrentUri.AbsolutePath == newUri.AbsolutePath)
                 return new NavigateResult(false, null); // Or maybe we should throw exception.
 
-            await NotifyAsync(originalUri, newUri, argument, hasArgument, sender, navigateType, withAnimation, overrideTransition, cts.Token);
-            var chain = _stack.Current;
+            await NotifyAsync(originalUri, newUri, argument, hasArgument, sender, navigateType, withAnimation,
+                overrideTransition, cts.Token);
+            
+            chain = _stack.Current;
 
-            if (!_waitingList.TryGetValue(chain, out var tcs))
+            if (!_waitingList.TryGetValue(chain, out tcs))
                 _waitingList[chain] = tcs = new TaskCompletionSource<NavigateResult>();
-
-            // Store cancellation token for this chain
-            _navigationCancellationTokens[chain] = cts;
-
-            try
-            {
-                // Wait for navigation to complete or be cancelled
-                using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token);
-                var cancellationTask = Task.Delay(Timeout.Infinite, combinedCts.Token);
-                var navigationTask = tcs.Task;
-
-                var completedTask = await Task.WhenAny(navigationTask, cancellationTask);
-                
-                if (completedTask == cancellationTask)
-                {
-                    // Navigation was cancelled
-                    throw new OperationCanceledException(cts.Token);
-                }
-
-                return await navigationTask;
-            }
-            finally
-            {
-                _waitingList.Remove(chain);
-                _navigationCancellationTokens.TryRemove(chain, out _);
-            }
         }
         finally
         {
-            // Remove from nested navigation stack
-            if (NestedNavigationStack.Count > 0 && NestedNavigationStack.Peek() == cts)
-            {
-                NestedNavigationStack.Pop();
-            }
+            if (cts.IsCancellationRequested)
+                tcs?.TrySetCanceled();
+
+            _currentNavigationCancellationToken = null;
         }
+
+        
+        try
+        {
+            return await tcs.Task;
+        }
+        finally
+        {
+            _waitingList.Remove(chain);
+        }
+        
     }
 
     private void CheckWaitingList(
@@ -429,9 +389,6 @@ public partial class Navigator : INavigator
         {
             if (_waitingList.TryGetValue(chain, out var tcs))
                 tcs.TrySetResult(new NavigateResult(hasArgument, argument));
-            
-            // Clean up cancellation tokens for removed chains
-            _navigationCancellationTokens.TryRemove(chain, out _);
         }
     }
 

@@ -219,10 +219,9 @@ public class NavigatorTests : IDisposable
                 It.IsAny<object>(),
                 It.IsAny<bool>(),
                 It.IsAny<CancellationToken>()))
-            .Returns(async (ShellView shell, NavigationStackChanges changes, NavigateType type, object arg, bool hasArg, CancellationToken ct) =>
+            .Returns((ShellView s, NavigationStackChanges n, NavigateType t, object o, bool b, CancellationToken ct) =>
             {
-                // Simulate cancellation during update
-                throw new TaskCanceledException();
+                return cts.CancelAsync();
             });
 
         _mockNavigateStrategy.Setup(s => s.NavigateAsync(
@@ -234,7 +233,6 @@ public class NavigatorTests : IDisposable
 
         // Act
         var task = _navigator.NavigateAndWaitAsync("/test", cts.Token);
-        await cts.CancelAsync();
 
         // Assert
         await Should.ThrowAsync<OperationCanceledException>(task);
