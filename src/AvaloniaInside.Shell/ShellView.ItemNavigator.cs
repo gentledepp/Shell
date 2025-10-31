@@ -42,12 +42,16 @@ public partial class ShellView
 		if (host != null && !HostedItemsHelper.CanBeHosted(host.Page))
 			throw new AggregateException("Host must inherits from ItemsControl");
 
-		Navigator.Registrar.RegisterRoute(
-			path,
-			route.Page,
-			host == null ? NavigationNodeType.Page : NavigationNodeType.Host,
-			route.Type,
-			host?.Default);
+		// Skip route registration in design mode
+		if (Navigator != null)
+		{
+			Navigator.Registrar.RegisterRoute(
+				path,
+				route.Page,
+				host == null ? NavigationNodeType.Page : NavigationNodeType.Host,
+				route.Type,
+				host?.Default);
+		}
 
 		foreach (var subRoute in route.Routes)
 			AddRoute(subRoute, path);

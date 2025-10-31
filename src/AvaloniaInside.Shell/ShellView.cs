@@ -338,9 +338,13 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
 
     public ShellView()
     {
-	    Navigator = Locator.Current
-            .GetService<INavigator>() ?? throw new ArgumentException("Cannot find INavigationService");
-        Navigator.RegisterShell(this);
+	    // In design mode, skip Navigator initialization as it requires DI container
+	    if (!Design.IsDesignMode)
+	    {
+		    Navigator = Locator.Current
+		        .GetService<INavigator>() ?? throw new ArgumentException("Cannot find INavigationService");
+		    Navigator.RegisterShell(this);
+	    }
 
         BackCommand = ReactiveCommand.CreateFromTask(BackActionAsync);
         SideMenuCommand = ReactiveCommand.CreateFromTask(MenuActionAsync);
@@ -367,7 +371,7 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
             _topLevelEventFlag = true;
         }
 
-        if (DefaultRoute != null  && !_loadedFlag)
+        if (DefaultRoute != null  && !_loadedFlag && Navigator != null)
         {
             _ = Navigator.NavigateAsync(DefaultRoute, CancellationToken.None);
             _loadedFlag = true;
@@ -452,12 +456,12 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
 
     #region Services and navigation
 
-    public INavigator Navigator { get; }
+    public INavigator? Navigator { get; }
 
     private NavigationBar? FindNavigationBar()
     {
 	    if (NavigationBarAttachType == NavigationBarAttachType.ToShell) return _navigationBar;
-	    return Navigator.CurrentChain?.GetAscendingNodes()
+	    return Navigator?.CurrentChain?.GetAscendingNodes()
 		    .Select(s => s.Instance)
 		    .OfType<Page>()
 		    .FirstOrDefault(f => f.AttachedNavigationBar != null)?.AttachedNavigationBar;
@@ -473,7 +477,7 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
         CancellationToken cancellationToken = default)
     {
         await (_contentView?.PushViewAsync(view, navigateType, cancellationToken) ?? Task.CompletedTask);
-        AttachedNavigationBar?.UpdateView(Navigator.CurrentChain?.Instance);
+        AttachedNavigationBar?.UpdateView(Navigator?.CurrentChain?.Instance);
         SelectSideMenuItem();
         UpdateBinding();
         UpdateSideMenu();
@@ -512,9 +516,9 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
             return true;
         }
 
-        var result = Navigator.HasItemInStack();
+        var result = Navigator?.HasItemInStack() ?? false;
         if (result)
-            Navigator.BackAsync();
+            Navigator?.BackAsync();
 
         return result;
     }
@@ -551,7 +555,7 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
 
     protected virtual Task BackActionAsync(CancellationToken cancellationToken)
     {
-        return Navigator.BackAsync(cancellationToken);
+        return Navigator?.BackAsync(cancellationToken) ?? Task.CompletedTask;
     }
 
     #endregion

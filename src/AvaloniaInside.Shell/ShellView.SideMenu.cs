@@ -307,7 +307,7 @@ public partial class ShellView
 
 	protected virtual void SelectSideMenuItem()
 	{
-		if (_sideMenu == null) return;
+		if (_sideMenu == null || Navigator == null) return;
 		_skipChanges = true;
 		SideMenuSelectedItem = _sideMenuItems
 			.FirstOrDefault(f => f.Path == Navigator.CurrentUri.AbsolutePath);
@@ -316,7 +316,7 @@ public partial class ShellView
 
 	private void SideMenuItemChanged(SideMenuItem item)
 	{
-		if (item == null || _skipChanges) return;
+		if (item == null || _skipChanges || Navigator == null) return;
 		_ = Navigator.NavigateAsync(item.Path, NavigateType.HostedItemChange);
 
 		if (GetCurrentBehave() != SideMenuBehaveType.Keep)
