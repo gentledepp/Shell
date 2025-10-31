@@ -346,6 +346,13 @@ public class Page : UserControl, INavigationLifecycle, INavigatorLifecycle, INav
 		if (_navigationBarPlaceHolder == null || _navigationBar != null)
 			return;
 
+		// In design mode, always create a NavigationBar for preview purposes
+		if (Design.IsDesignMode)
+		{
+			_navigationBarPlaceHolder.Content = _navigationBar = new NavigationBar(this);
+			return;
+		}
+
 		if (Shell?.NavigationBarAttachType is not ({ } type and not NavigationBarAttachType.ToShell))
 			return;
 
