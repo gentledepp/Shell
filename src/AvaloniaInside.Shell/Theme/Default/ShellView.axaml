@@ -12,7 +12,8 @@
 							          Header="{TemplateBinding SideMenuHeader}"
 							          Footer="{TemplateBinding SideMenuFooter}"
 							          Contents="{TemplateBinding SideMenuContents}"
-							          ContentsTemplate="{TemplateBinding SideMenuContentsTemplate}">
+							          ContentsTemplate="{TemplateBinding SideMenuContentsTemplate}"
+							          OverridePageTransition="{TemplateBinding ModalPageTransition}">
 							</SideMenu>
 						</SplitView.Pane>
 

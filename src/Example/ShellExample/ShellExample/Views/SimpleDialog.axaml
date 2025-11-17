@@ -2,10 +2,38 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:shell="clr-namespace:AvaloniaInside.Shell;assembly=AvaloniaInside.Shell"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              VerticalAlignment="Center"
              HorizontalAlignment="Center"
              x:Class="ShellExample.Views.SimpleDialog">
+
+    <!-- Custom side menu for modal -->
+    <ShellView.OverrideSideMenu>
+        <StackPanel Spacing="10" Margin="20">
+            <TextBlock Text="Modal Options"
+                       FontSize="18"
+                       FontWeight="Bold"
+                       Margin="0,0,0,20"/>
+
+            <TextBlock Text="This is a modal dialog with a custom side menu!"
+                       TextWrapping="Wrap"/>
+
+            <Separator Margin="0,10"/>
+
+            <!-- Close button in side menu -->
+            <Button Content="✕ Close Modal"
+                    HorizontalAlignment="Stretch"
+                    Command="{Binding $parent[shell:ShellView].BackCommand}" />
+
+            <TextBlock Text="Even modal pages can have custom side menus."
+                       TextWrapping="Wrap"
+                       Margin="0,10,0,0"
+                       Foreground="Gray"
+                       FontSize="12"/>
+        </StackPanel>
+    </ShellView.OverrideSideMenu>
+
 	<Border Background="White" CornerRadius="5">
 		<Grid RowDefinitions="40,*,50">
 			<TextBlock Text="Simple dialog!" FontSize="24" Foreground="Black" Margin="15"></TextBlock>

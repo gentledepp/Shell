@@ -3,13 +3,44 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:i="https://github.com/projektanker/icons.avalonia"
+             xmlns:shell="clr-namespace:AvaloniaInside.Shell;assembly=AvaloniaInside.Shell"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="ShellExample.Views.ProfileView"
              NavigationBar.Header="Profile">
 	<NavigationBar.HeaderIcon>
 		<i:Icon Value="fa-solid fa-user" />
 	</NavigationBar.HeaderIcon>
-	
-	Welcome to Avalonia!
+    <ShellView.OverrideSideMenu>
+        <StackPanel Spacing="10" Margin="20">
+            <TextBlock Text="Profile Menu"
+                       FontSize="18"
+                       FontWeight="Bold"
+                       Margin="0,0,0,20"/>
+
+            <!-- Back button -->
+            <Button Content="← Back to Settings"
+                    HorizontalAlignment="Stretch"
+                    Command="{Binding $parent[shell:ShellView].BackCommand}" />
+
+            <Separator Margin="0,10"/>
+
+            <!-- Additional profile-specific actions -->
+            <Button Content="Edit Profile" HorizontalAlignment="Stretch" />
+            <Button Content="Change Password" HorizontalAlignment="Stretch" />
+            <Button Content="Privacy Settings" HorizontalAlignment="Stretch" />
+
+            <Separator Margin="0,10"/>
+
+            <TextBlock Text="Profile actions and settings appear here."
+                       TextWrapping="Wrap"
+                       Foreground="Gray"
+                       FontSize="12"/>
+        </StackPanel>
+    </ShellView.OverrideSideMenu>
+
+    <StackPanel Margin="20" Spacing="10">
+        <TextBlock Text="Profile Page" FontSize="24" FontWeight="Bold"/>
+        <TextBlock Text="This page has a custom side menu with profile-specific actions." TextWrapping="Wrap"/>
+    </StackPanel>
 </Page>
 

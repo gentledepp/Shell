@@ -123,6 +123,28 @@ public class NavigationBar : TemplatedControl
 
 	#endregion
 
+	#region ForceSideMenuButton
+
+	public static readonly DirectProperty<NavigationBar, bool> ForceSideMenuButtonProperty =
+		AvaloniaProperty.RegisterDirect<NavigationBar, bool>(
+			nameof(ForceSideMenuButton),
+			o => o.ForceSideMenuButton,
+			(o, v) => o.ForceSideMenuButton = v);
+
+	private bool _forceSideMenuButton = false;
+
+	public bool ForceSideMenuButton
+	{
+		get => _forceSideMenuButton;
+		set
+		{
+			if (SetAndRaise(ForceSideMenuButtonProperty, ref _forceSideMenuButton, value))
+				UpdateButtons();
+		}
+	}
+
+	#endregion
+
 	#region CurrentView
 
 	public static readonly DirectProperty<NavigationBar, object?> CurrentViewProperty =
@@ -479,23 +501,26 @@ public class NavigationBar : TemplatedControl
 
 		if (_actionButton == null) return;
 
-		_actionButton.Command = hasItem
-			? BackCommand
-			: SideMenuCommand;
+		// If ForceSideMenuButton is true, always show side menu button regardless of stack
+		var showSideMenuButton = ForceSideMenuButton || !hasItem;
 
-		if (hasItem)
-		{
-			_actionButton.Classes.Remove("SideMenuButton");
-			_actionButton.Classes.Add("BackButton");
+		_actionButton.Command = showSideMenuButton
+			? SideMenuCommand
+			: BackCommand;
 
-			_actionButton.IsVisible = true;
-		}
-		else
+		if (showSideMenuButton)
 		{
 			_actionButton.Classes.Remove("BackButton");
 			_actionButton.Classes.Add("SideMenuButton");
 
 			_actionButton.IsVisible = HasSideMenuOption;
+		}
+		else
+		{
+			_actionButton.Classes.Remove("SideMenuButton");
+			_actionButton.Classes.Add("BackButton");
+
+			_actionButton.IsVisible = true;
 		}
 	}
 

@@ -1,11 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
+using Avalonia.Animation;
 using AvaloniaInside.Shell.Data;
 
 namespace AvaloniaInside.Shell;
@@ -13,6 +16,9 @@ namespace AvaloniaInside.Shell;
 public class SideMenu : TemplatedControl
 {
 	private ListBox _listBox;
+	private StackContentView? _overrideView;
+	private object? _currentOverrideContent;
+	private readonly SemaphoreSlim _overrideLock = new(1, 1);
 
 	#region HeaderTemplate
 
@@ -89,7 +95,9 @@ public class SideMenu : TemplatedControl
 	#region SelectedItem
 
 	private SideMenuItem? _selectedItem;
-	public static readonly DirectProperty<SideMenu, SideMenuItem?> SelectedItemProperty =
+    private ContentControl? _currentOverrideView;
+
+    public static readonly DirectProperty<SideMenu, SideMenuItem?> SelectedItemProperty =
 		AvaloniaProperty.RegisterDirect<SideMenu, SideMenuItem?>(
 			nameof(SelectedItem),
 			o => o.SelectedItem,
@@ -116,6 +124,50 @@ public class SideMenu : TemplatedControl
 
 	#endregion
 
+	
+    #region SideMenuOverride
+
+    public static readonly StyledProperty<object?> SideMenuOverrideProperty =
+        AvaloniaProperty.Register<SideMenu, object?>(
+            nameof(SideMenuOverride));
+
+    public object? SideMenuOverride
+    {
+        get => GetValue(SideMenuOverrideProperty);
+        set =>SetValue(SideMenuOverrideProperty, value);
+    }
+
+    #endregion
+
+    #region SideMenuOverrideDataContext
+
+    public static readonly StyledProperty<object?> SideMenuOverrideDataContextProperty =
+        AvaloniaProperty.Register<SideMenu, object?>(
+            nameof(SideMenuOverrideDataContext));
+
+    public object? SideMenuOverrideDataContext
+    {
+        get => GetValue(SideMenuOverrideDataContextProperty);
+        set => SetValue(SideMenuOverrideDataContextProperty, value);
+    }
+
+    #endregion
+
+    #region OverridePageTransition
+
+    public static readonly StyledProperty<IPageTransition?> OverridePageTransitionProperty =
+        AvaloniaProperty.Register<SideMenu, IPageTransition?>(
+            nameof(OverridePageTransition));
+
+    public IPageTransition? OverridePageTransition
+    {
+        get => GetValue(OverridePageTransitionProperty);
+        set => SetValue(OverridePageTransitionProperty, value);
+    }
+
+    #endregion
+
+
 	#region Contents
 
 	public static readonly StyledProperty<IList> ContentsProperty =
@@ -135,6 +187,7 @@ public class SideMenu : TemplatedControl
 		base.OnApplyTemplate(e);
 		_listBox = e.NameScope.Find<ListBox>("PART_Items")
 		           ?? throw new KeyNotFoundException("PART_Items not found in SideMenu template");
+		_overrideView = e.NameScope.Find<StackContentView>("PART_OverrideView");
 
 		SetupUi();
 	}
@@ -154,5 +207,57 @@ public class SideMenu : TemplatedControl
 	{
 		base.OnPropertyChanged(change);
 		Debug.WriteLine(change.Property.Name);
+	}
+
+	public async Task SetOverrideAsync(
+		object? overrideContent,
+		object? dataContext,
+		NavigateType navigateType,
+		CancellationToken cancellationToken = default)
+	{
+		if (_overrideView == null) return;
+
+		// Use semaphore to prevent concurrent calls from creating duplicate visual parents
+		await _overrideLock.WaitAsync(cancellationToken);
+		try
+		{
+			// Skip if the content hasn't changed to avoid duplicate visual parent errors
+			if (ReferenceEquals(_currentOverrideContent, overrideContent))
+			{
+				// Just update DataContext if needed
+				if (_overrideView.CurrentView is ContentControl existingControl)
+				{
+					existingControl.DataContext = dataContext;
+				}
+				return;
+			}
+
+			// Clear existing content if any
+			if (_overrideView.HasContent && _currentOverrideView != null)
+            {
+                await _overrideView.RemoveViewAsync(_currentOverrideView, navigateType, cancellationToken);
+				_currentOverrideContent = null;
+                _currentOverrideView = null;
+            }
+
+			if (overrideContent != null)
+			{
+				// Create a ContentControl with the override content
+				var control = new ContentControl
+				{
+					Content = overrideContent,
+					DataContext = dataContext
+				};
+
+				// Push to stack with animation
+				await _overrideView.PushViewAsync(control, navigateType, cancellationToken);
+				_currentOverrideContent = overrideContent;
+                _currentOverrideView = control;
+            }
+		}
+		finally
+		{
+			_overrideLock.Release();
+		}
 	}
 }

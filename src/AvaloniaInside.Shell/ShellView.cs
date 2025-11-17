@@ -431,6 +431,33 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
         {
 	        _sideMenu.Items = _sideMenuItems;
         }
+
+        // Subscribe to CurrentView changes to update side menu when view changes
+        if (_contentView != null)
+        {
+	        _contentView.PropertyChanged += OnContentViewPropertyChanged;
+        }
+
+        if (_modalView != null)
+        {
+	        _modalView.PropertyChanged += OnModalViewPropertyChanged;
+        }
+    }
+
+    private void OnContentViewPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
+    {
+        if (e.Property == StackContentView.CurrentViewProperty)
+        {
+	        UpdateSideMenu();
+        }
+    }
+
+    private void OnModalViewPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
+    {
+        if (e.Property == StackContentView.CurrentViewProperty)
+        {
+	        UpdateSideMenu();
+        }
     }
 
     protected virtual void OnSafeEdgeSetup()
@@ -509,8 +536,14 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
         UpdateSideMenu();
     }
 
-    public Task ModalAsync(object instance, NavigateType navigateType, CancellationToken cancellationToken) =>
-        _modalView?.PushViewAsync(instance, navigateType, cancellationToken) ?? Task.CompletedTask;
+    public async Task ModalAsync(object instance, NavigateType navigateType, CancellationToken cancellationToken)
+    {
+        // Start both animations in parallel for synchronized transitions
+        var modalTask = _modalView?.PushViewAsync(instance, navigateType, cancellationToken) ?? Task.CompletedTask;
+        var sideMenuTask = UpdateSideMenuAsync(navigateType, cancellationToken);
+
+        await Task.WhenAll(modalTask, sideMenuTask);
+    }
 
     private bool Back()
     {

@@ -6,6 +6,7 @@ using Avalonia;
 using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
+using Avalonia.VisualTree;
 using AvaloniaInside.Shell.Data;
 
 namespace AvaloniaInside.Shell;
@@ -238,8 +239,15 @@ public partial class ShellView
 	#region OverrideSideMenuBehave
 
 	public static readonly AttachedProperty<SideMenuBehaveType?> OverrideSideMenuBehaveProperty =
-		AvaloniaProperty.RegisterAttached<ShellView, AvaloniaObject, SideMenuBehaveType?>("OverrideSideMenuBehave",
+		AvaloniaProperty.RegisterAttached<ShellView, AvaloniaObject, SideMenuBehaveType?>(
+			"OverrideSideMenuBehave",
 			defaultValue: null);
+
+	static ShellView()
+	{
+		OverrideSideMenuBehaveProperty.Changed.AddClassHandler<Control>(OnOverrideSideMenuBehaveChanged);
+		OverrideSideMenuProperty.Changed.AddClassHandler<Control>(OnOverrideSideMenuChanged);
+	}
 
 	public static SideMenuBehaveType? GetOverrideSideMenuBehave(AvaloniaObject element) =>
 		element.GetValue(OverrideSideMenuBehaveProperty);
@@ -247,7 +255,37 @@ public partial class ShellView
 	public static void SetOverrideSideMenuBehave(AvaloniaObject element, SideMenuBehaveType? parameter) =>
 		element.SetValue(OverrideSideMenuBehaveProperty, parameter);
 
+	private static void OnOverrideSideMenuBehaveChanged(Control control, AvaloniaPropertyChangedEventArgs e)
+	{
+		// Find the ShellView ancestor and update its side menu
+		var shellView = control.FindAncestorOfType<ShellView>();
+		shellView?.UpdateSideMenu();
+	}
+
 	#endregion
+
+
+    #region OverrideSideMenu
+
+    public static readonly AttachedProperty<object?> OverrideSideMenuProperty =
+        AvaloniaProperty.RegisterAttached<ShellView, AvaloniaObject, object?>(
+            "OverrideSideMenu",
+            defaultValue: null);
+
+    public static object? GetOverrideSideMenu(AvaloniaObject element) =>
+        element.GetValue(OverrideSideMenuProperty);
+
+    public static void SetOverrideSideMenu(AvaloniaObject element, object? parameter) =>
+        element.SetValue(OverrideSideMenuProperty, parameter);
+
+    private static void OnOverrideSideMenuChanged(Control control, AvaloniaPropertyChangedEventArgs e)
+    {
+        // Find the ShellView ancestor and update its side menu
+        var shellView = control.FindAncestorOfType<ShellView>();
+        shellView?.UpdateSideMenu();
+    }
+
+    #endregion
 
 	#endregion
 
@@ -259,11 +297,20 @@ public partial class ShellView
 		return Task.CompletedTask;
 	}
 
-	protected virtual void UpdateSideMenu()
+	protected virtual async Task UpdateSideMenuAsync(
+		NavigateType navigateType,
+		CancellationToken cancellationToken = default)
 	{
 		if (_splitView == null || NavigationBar == null) return;
 
-		switch (GetCurrentBehave())
+		var currentOverride = GetCurrentOverride();
+		var currentBehave = GetCurrentBehave();
+
+		// Force side menu button over back button when there's custom override content
+		// BUT not when behavior is Removed (side menu is hidden, so back button should show)
+		NavigationBar.ForceSideMenuButton = currentOverride != null && currentBehave != SideMenuBehaveType.Removed;
+
+		switch (currentBehave)
 		{
 			case SideMenuBehaveType.Default:
 				_splitView.OpenPaneLength = SideMenuPresented ? SideMenuSize : 0;
@@ -287,11 +334,50 @@ public partial class ShellView
                 NavigationBar.HasSideMenuOption = false;
                 break;
         }
+
+		// Animate the override content in/out with the same transition as the view
+		await _sideMenu.SetOverrideAsync(
+			currentOverride,
+			GetCurrentViewDataContext(),
+			navigateType,
+			cancellationToken);
+    }
+
+	// Synchronous wrapper for backward compatibility (uses default navigate type)
+	protected virtual void UpdateSideMenu()
+	{
+		_ = UpdateSideMenuAsync(NavigateType.Normal);
+	}
+
+    private object? GetCurrentOverride()
+    {
+        // Prioritize modal view when it has content
+        var view = _modalView?.HasContent == true
+            ? _modalView.CurrentView
+            : _contentView?.CurrentView;
+
+        if (view is StyledElement element && GetOverrideSideMenu(element) is { } overrideBehave)
+            return overrideBehave;
+
+        return null;
+    }
+
+	private object? GetCurrentViewDataContext()
+	{
+		// Prioritize modal view when it has content
+		var view = _modalView?.HasContent == true
+			? _modalView.CurrentView
+			: _contentView?.CurrentView;
+
+		return view is StyledElement element ? element.DataContext : null;
 	}
 
 	private SideMenuBehaveType GetCurrentBehave()
 	{
-		var view = this._contentView?.CurrentView;
+		// Prioritize modal view when it has content
+		var view = _modalView?.HasContent == true
+			? _modalView.CurrentView
+			: _contentView?.CurrentView;
 
 		if (view is StyledElement element && GetOverrideSideMenuBehave(element) is { } overrideBehave)
 			return overrideBehave;
