@@ -470,7 +470,7 @@ public class NavigationBar : TemplatedControl
 		_pendingHeader = null;
 	}
 
-	protected virtual void UpdateButtons()
+	internal virtual void UpdateButtons()
 	{
 		if (ShellView == null) return;
 
@@ -479,11 +479,29 @@ public class NavigationBar : TemplatedControl
 
 		if (_actionButton == null) return;
 
-		_actionButton.Command = hasItem
-			? BackCommand
-			: SideMenuCommand;
+		// Check if page has local pane content
+		bool hasLocalPane = Page?.Pane != null;
 
-		if (hasItem)
+		// Determine which command to use for the side menu button
+		ICommand? sideMenuCommandToUse = SideMenuCommand;
+		bool showSideMenuButton = HasSideMenuOption;
+
+		if (hasLocalPane && Page != null)
+		{
+			// Use the page's local toggle command for page-level side menu
+			sideMenuCommandToUse = Page.ToggleSideMenuCommand;
+			// Only show button if behavior allows toggling
+			showSideMenuButton = Page.LocalSideMenuBehaviorAllowsToggle();
+		}
+
+		// If page has local pane, always show side menu button, otherwise check navigation stack
+		var shouldShowBackButton = !hasLocalPane && hasItem;
+
+		_actionButton.Command = shouldShowBackButton
+			? BackCommand
+			: sideMenuCommandToUse;
+
+		if (shouldShowBackButton)
 		{
 			_actionButton.Classes.Remove("SideMenuButton");
 			_actionButton.Classes.Add("BackButton");
@@ -495,7 +513,7 @@ public class NavigationBar : TemplatedControl
 			_actionButton.Classes.Remove("BackButton");
 			_actionButton.Classes.Add("SideMenuButton");
 
-			_actionButton.IsVisible = HasSideMenuOption;
+			_actionButton.IsVisible = showSideMenuButton;
 		}
 	}
 

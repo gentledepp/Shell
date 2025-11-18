@@ -18,7 +18,7 @@ public partial class ShellView
 
 	#region Properties
 
-	public double SideMenuSize => ScreenSize == ScreenSizeType.Small ? DesiredSize.Width - 35 : DefaultSideMenuSize;
+	public double SideMenuSize => ScreenSize == ScreenSizeType.Small ? Math.Min(Bounds.Width - 35, DefaultSideMenuSize) : DefaultSideMenuSize;
 
 	public static readonly StyledProperty<double> DefaultSideMenuSizeProperty = AvaloniaProperty.Register<ShellView,double>(nameof(DefaultSideMenuSize), 250);
 
@@ -259,9 +259,19 @@ public partial class ShellView
 		return Task.CompletedTask;
 	}
 
-	protected virtual void UpdateSideMenu()
+	internal virtual void UpdateSideMenu()
 	{
 		if (_splitView == null || NavigationBar == null) return;
+
+		// Check if current page has local pane content
+		if (_contentView?.CurrentView is Page page && page.Pane != null)
+		{
+			// Hide global side menu completely when page has its own pane
+			_splitView.OpenPaneLength = 0;
+			_splitView.IsPaneOpen = false;
+			NavigationBar.HasSideMenuOption = false;
+			return;
+		}
 
 		switch (GetCurrentBehave())
 		{

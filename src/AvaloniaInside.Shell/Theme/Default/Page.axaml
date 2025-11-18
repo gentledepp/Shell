@@ -6,14 +6,30 @@
 			<ControlTemplate>
 				<Border Background="{TemplateBinding Background}"
 				        CornerRadius="14">
-					<Grid RowDefinitions="Auto,*">
-						<ContentPresenter Grid.Row="0"
-						                  Name="PART_NavigationBarPlaceHolder"></ContentPresenter>
-						<ContentPresenter Grid.Row="1"
-						                  Content="{TemplateBinding Content}"
-						                  Margin="{TemplateBinding PageSafePadding}">
-						</ContentPresenter>
-					</Grid>
+					<SplitView Name="PART_LocalSplitView"
+                               IsPaneOpen="{TemplateBinding IsPaneOpen}"
+					           OpenPaneLength="{TemplateBinding LocalSideMenuOpenPaneLength}"
+					           DisplayMode="{TemplateBinding LocalSideMenuDisplayMode}"
+					           PaneBackground="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+					           CompactPaneLength="0">
+						<SplitView.Pane>
+							<Grid RowDefinitions="Auto,*">
+								<Border Grid.Row="0"
+                                        Height="{TemplateBinding TopSafeSpace}"
+                                        IsVisible="{TemplateBinding ApplyTopSafePadding}">
+                                </Border>
+                                <ContentPresenter Grid.Row="1" Content="{TemplateBinding Pane}"/>
+                            </Grid>
+						</SplitView.Pane>
+						<Grid RowDefinitions="Auto,*">
+							<ContentPresenter Grid.Row="0"
+							                  Name="PART_NavigationBarPlaceHolder"></ContentPresenter>
+							<ContentPresenter Grid.Row="1"
+							                  Content="{TemplateBinding Content}"
+							                  Margin="{TemplateBinding PageSafePadding}">
+							</ContentPresenter>
+						</Grid>
+					</SplitView>
 				</Border>
 			</ControlTemplate>
 		</Setter>
