@@ -508,7 +508,7 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
     public Task ModalAsync(object instance, NavigateType navigateType, CancellationToken cancellationToken) =>
         _modalView?.PushViewAsync(instance, navigateType, cancellationToken) ?? Task.CompletedTask;
 
-    private bool Back()
+    private async Task<bool> Back()
     {
         if (ScreenSize == ScreenSizeType.Small && SideMenuPresented)
         {
@@ -518,7 +518,7 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
 
         var result = Navigator.HasItemInStack();
         if (result)
-            Navigator.BackAsync();
+            await Navigator.BackAsync();
 
         return result;
     }
@@ -537,15 +537,18 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
         };
     }
 
-    private void TopLevelOnBackRequested(object? sender, RoutedEventArgs e)
+    private async void TopLevelOnBackRequested(object? sender, RoutedEventArgs e)
     {
-        e.Handled = Back();
+        e.Handled = await Back();
     }
 
-    private void TopLevelOnKeyUp(object? sender, KeyEventArgs e)
+    private async void TopLevelOnKeyUp(object? sender, KeyEventArgs e)
     {
+        if (OperatingSystem.IsAndroid())
+            return;
+
         if (e.Key == Key.Escape)
-            Back();
+            await Back();
     }
 
     private void SplitViewOnPaneClosing(object? sender, CancelRoutedEventArgs e)
