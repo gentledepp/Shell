@@ -17,8 +17,8 @@
 				   Foreground="Black">
 		</TextBlock>
 
-		<ListBox Grid.Row="1" ItemsSource="{Binding Categories}"
-		         SelectedItem="{Binding SelectedCategory}"
+		<ListBox Grid.Row="1" ItemsSource="{ReflectionBinding Categories}"
+		         SelectedItem="{ReflectionBinding SelectedCategory}"
 		         AutoScrollToSelectedItem="True"
 		         VerticalAlignment="Stretch"
 		         HorizontalAlignment="Stretch">
@@ -31,7 +31,7 @@
 				<DataTemplate>
 					<StackPanel Orientation="Horizontal">
 						<i:Icon Value="fa-solid fa-check" />
-						<TextBlock Text="{Binding .}" />
+						<TextBlock Text="{ReflectionBinding .}" />
 					</StackPanel>
 				</DataTemplate>
 			</ListBox.ItemTemplate>
@@ -47,8 +47,8 @@
 		</ListBox>
 		<StackPanel Grid.Row="2" Height="40">
 			<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="8" VerticalAlignment="Center">
-				<Button Content="Close" Command="{Binding CloseCommand}"></Button>
-				<Button Content="Clear filter" Foreground="Red" Command="{Binding ClearCommand}"></Button>
+				<Button Content="Close" Command="{ReflectionBinding CloseCommand}"></Button>
+				<Button Content="Clear filter" Foreground="Red" Command="{ReflectionBinding ClearCommand}"></Button>
 			</StackPanel>
 		</StackPanel>
 	</Grid>

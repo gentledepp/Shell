@@ -41,7 +41,7 @@ Install .NET 9.0 SDK to support the Shell project's multi-targeting:
 Temporarily change the Shell project to target only .NET 8.0:
 ```xml
 <!-- In AvaloniaInside.Shell.csproj -->
-<TargetFrameworks>net8.0</TargetFrameworks>  <!-- Remove net9.0 -->
+<TargetFrameworks>net10.0</TargetFrameworks>  <!-- Remove net9.0 -->
 ```
 
 ### Option 3: Enable Excluded Tests
@@ -63,7 +63,7 @@ And add back the project reference and dependencies:
   <PackageReference Include="FluentAssertions" Version="6.12.0" />
   <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
   <PackageReference Include="Avalonia.Themes.Fluent" Version="$(AvaloniaVersion)" />
-  <PackageReference Include="Avalonia.ReactiveUI" Version="$(AvaloniaVersion)" />
+  <PackageReference Include="ReactiveUI.Avalonia" Version="11.3.8" />
 </ItemGroup>
 
 <ItemGroup>

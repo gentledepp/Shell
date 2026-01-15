@@ -13,7 +13,7 @@
 	</NavigationBar.HeaderIcon>
 	<TabPage.ItemTemplate>
 		<DataTemplate>
-			<TextBlock DataContext="{Binding Instance}"
+			<TextBlock DataContext="{ReflectionBinding Instance}"
 			           Text="{Binding Path=(NavigationBar.Header)}"
 			           FontSize="14"
 			           HorizontalAlignment="Center">

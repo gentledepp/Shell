@@ -13,13 +13,13 @@
 	<TabControl.ItemTemplate>
 		<DataTemplate>
 			<Grid RowDefinitions="*,*" Width="70">
-				<i:Icon Value="{Binding Instance.Icon}"
+				<i:Icon Value="{ReflectionBinding Instance.Icon}"
 				       HorizontalAlignment="Center"
 				       Height="24"
 				       Margin="2"/>
 				<TextBlock Grid.Row="1"
-				           DataContext="{Binding Instance}"
-				           Text="{Binding Path=(NavigationBar.Header)}"
+				           DataContext="{ReflectionBinding Instance}"
+				           Text="{ReflectionBinding Path=(NavigationBar.Header)}"
 				           FontSize="14"
 				           HorizontalAlignment="Center"></TextBlock>
 			</Grid>
@@ -27,13 +27,13 @@
 	</TabControl.ItemTemplate>
 	<TabControl.ContentTemplate>
 		<DataTemplate>
-			<ContentPresenter Content="{Binding Instance}"></ContentPresenter>
+			<ContentPresenter Content="{ReflectionBinding Instance}"></ContentPresenter>
 		</DataTemplate>
 	</TabControl.ContentTemplate>
 	<TabControl.Styles>
 		<Style Selector="TabControl.MainTab /template/ Border > DockPanel > Border">
 			<Setter Property="Padding"
-			        Value="{Binding BottomSafePadding, RelativeSource={RelativeSource AncestorType={x:Type ShellView}}}"></Setter>
+			        Value="{ReflectionBinding BottomSafePadding, RelativeSource={RelativeSource AncestorType={x:Type ShellView}}}"></Setter>
 		</Style>
 		<Style Selector="TabControl.MainTab /template/ Border > DockPanel > ItemsPresenter">
 			<Setter Property="HorizontalAlignment" Value="Center" />

@@ -9,7 +9,7 @@
 	<Grid>
 		<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="14">
 			<TextBlock Text="Welcome to AvaloniaInside" FontSize="18" HorizontalAlignment="Center"></TextBlock>
-			<Button Content="LOGIN!" HorizontalAlignment="Center" Margin="30" Command="{Binding OpenCommand}"></Button>
+			<Button Content="LOGIN!" HorizontalAlignment="Center" Margin="30" Command="{ReflectionBinding OpenCommand}"></Button>
 		</StackPanel>
 	</Grid>
 </Page>

@@ -1,7 +1,7 @@
 using Foundation;
 using Avalonia;
 using Avalonia.iOS;
-using Avalonia.ReactiveUI;
+using ReactiveUI.Avalonia;
 using AvaloniaInside.Shell;
 
 namespace ShellExample.iOS;
