@@ -1,5 +1,5 @@
 <Project>
   <PropertyGroup>
-    <AvaloniaVersion>11.2.5</AvaloniaVersion>
+    <AvaloniaVersion>12.0.999-cibuild0061334-alpha</AvaloniaVersion>
   </PropertyGroup>
 </Project>

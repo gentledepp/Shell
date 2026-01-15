@@ -22,7 +22,7 @@
            LargeScreenSideMenuMode="Inline"
            LargeScreenSideMenuBehave="Keep"
 
-           DefaultPageTransition="{Binding CurrentTransition}">
+           DefaultPageTransition="{ReflectionBinding CurrentTransition}">
 	<Design.DataContext>
 		<viewModels:MainViewModel />
 	</Design.DataContext>

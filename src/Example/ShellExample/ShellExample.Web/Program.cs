@@ -1,6 +1,6 @@
 ﻿using System.Runtime.Versioning;
 using Avalonia;
-using Avalonia.ReactiveUI;
+using ReactiveUI.Avalonia;
 using ShellExample;
 using Avalonia.Browser;
 using AvaloniaInside.Shell;

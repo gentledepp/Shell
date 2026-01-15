@@ -25,6 +25,8 @@ public class HomePageViewModel : ViewModelBase
 		return _navigationService.NavigateAsync("/main/home/confirmation", cancellationToken);
 	}
 
+	public string Greeting { get; set; } = "Hello";
+
 	private Task Navigate()
 	{
 		return _navigationService.NavigateAsync("/second");

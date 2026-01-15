@@ -11,6 +11,6 @@ public class SplashActivity : Activity
 	{
 		base.OnResume();
 
-		StartActivity(new Intent(Application.Context, typeof(MainActivity)));
+		StartActivity(new Intent(this, typeof(MainActivity)));
 	}
 }

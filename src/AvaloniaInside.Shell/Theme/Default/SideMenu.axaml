@@ -20,10 +20,10 @@
 								<ListBox.ItemTemplate>
 									<DataTemplate>
 										<StackPanel Orientation="Horizontal" Height="22" Spacing="8">
-											<Image Source="{Binding Icon}"
-											       IsVisible="{Binding !!Icon}"
+											<Image Source="{ReflectionBinding Icon}"
+											       IsVisible="{ReflectionBinding !!Icon}"
 											       VerticalAlignment="Center"></Image>
-											<TextBlock Text="{Binding Title}"
+											<TextBlock Text="{ReflectionBinding Title}"
 											           VerticalAlignment="Center"></TextBlock>
 										</StackPanel>
 									</DataTemplate>
