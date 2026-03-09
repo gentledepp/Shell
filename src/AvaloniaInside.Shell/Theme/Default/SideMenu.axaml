@@ -12,6 +12,11 @@
 							<ListBox Name="PART_Items"
 							         ItemsSource="{TemplateBinding Items}"
 							         SelectedItem="{TemplateBinding SelectedItem, Mode=TwoWay}">
+								<ListBox.Styles>
+									<Style Selector="ListBoxItem">
+										<Setter Property="IsVisible" Value="{Binding IsVisible}" />
+									</Style>
+								</ListBox.Styles>
 								<ListBox.ItemsPanel>
 									<ItemsPanelTemplate>
 										<StackPanel></StackPanel>
