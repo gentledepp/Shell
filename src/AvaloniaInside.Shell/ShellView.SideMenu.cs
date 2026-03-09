@@ -251,6 +251,16 @@ public partial class ShellView
 
 	#endregion
 
+	#region SideMenu Item Management
+
+	public void AddSideMenuItem(SideMenuItem item) => _sideMenuItems.Add(item);
+
+	public void InsertSideMenuItem(int index, SideMenuItem item) => _sideMenuItems.Insert(index, item);
+
+	public bool RemoveSideMenuItem(SideMenuItem item) => _sideMenuItems.Remove(item);
+
+	#endregion
+
 	#region Behavior
 
 	protected virtual Task MenuActionAsync(CancellationToken cancellationToken)
