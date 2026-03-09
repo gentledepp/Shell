@@ -519,9 +519,11 @@ public class NavigationBar : TemplatedControl
 
 	protected virtual void UpdateItems(object? view, ContentControl itemPresenter)
 	{
+		// Detach any existing content to avoid "already has a visual parent" error
+		itemPresenter.Content = null;
+
 		if (view is not AvaloniaObject)
 		{
-			itemPresenter.Content = null;
 			itemPresenter.DataContext = null;
 			return;
 		}
@@ -542,9 +544,11 @@ public class NavigationBar : TemplatedControl
 
 	protected virtual void UpdateHeader(object? view, ContentControl itemPresenter)
 	{
+		// Detach any existing content to avoid "already has a visual parent" error
+		itemPresenter.Content = null;
+
 		if (view is not AvaloniaObject)
 		{
-			itemPresenter.Content = null;
 			itemPresenter.DataContext = null;
 			return;
 		}
