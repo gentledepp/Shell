@@ -54,6 +54,7 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
 
     private bool _loadedFlag;
     private bool _topLevelEventFlag;
+    private SwipeOpenGestureHandler? _sideMenuSwipeHandler;
 
     #endregion
 
@@ -386,6 +387,13 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
         OnSafeEdgeSetup();
     }
 
+    protected override void OnUnloaded(RoutedEventArgs e)
+    {
+        base.OnUnloaded(e);
+        _sideMenuSwipeHandler?.Dispose();
+        _sideMenuSwipeHandler = null;
+    }
+
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
         base.OnApplyTemplate(e);
@@ -427,6 +435,39 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
         {
 	        _sideMenu.Items = _sideMenuItems;
         }
+
+        SetupSideMenuSwipeHandler();
+    }
+
+    private void SetupSideMenuSwipeHandler()
+    {
+        _sideMenuSwipeHandler?.Dispose();
+
+        if (_splitView == null) return;
+
+        _sideMenuSwipeHandler = new SwipeOpenGestureHandler(
+           hitTestArea: this,
+           canSwipeOpen: () =>
+              SwipeToOpenSideMenuEnabled &&
+              GetCurrentBehave() == SideMenuBehaveType.Default &&
+              !SideMenuPresented &&
+              !(_contentView?.CurrentView is Page { Pane: not null }),
+           canSwipeClose: () =>
+              SwipeToOpenSideMenuEnabled &&
+              GetCurrentBehave() == SideMenuBehaveType.Default &&
+              SideMenuPresented &&
+              !(_contentView?.CurrentView is Page { Pane: not null }),
+           isPaneOpen: () => SideMenuPresented,
+           targetWidth: () => SideMenuSize,
+           setOpenPaneLength: w => _splitView.OpenPaneLength = w,
+           setPaneOpen: o => _splitView.SetCurrentValue(SplitView.IsPaneOpenProperty, o),
+           commitState: open =>
+           {
+              _sideMenuPresented = open;
+              RaisePropertyChanged(SideMenuPresentedProperty, !open, open);
+              UpdateSideMenu();
+           });
+        _sideMenuSwipeHandler.Attach();
     }
 
     protected virtual void OnSafeEdgeSetup()
@@ -553,6 +594,11 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
 
     private void SplitViewOnPaneClosing(object? sender, CancelRoutedEventArgs e)
     {
+        if (_sideMenuSwipeHandler is { IsGestureActive: true })
+        {
+            e.Cancel = true;
+            return;
+        }
         SideMenuPresented = false;
     }
 

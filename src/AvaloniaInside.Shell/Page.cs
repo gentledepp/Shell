@@ -21,6 +21,7 @@ public class Page : UserControl, INavigationLifecycle, INavigatorLifecycle, INav
 	private NavigationBar? _navigationBar;
 	private SplitView? _localSplitView;
 	private SplitViewDisplayMode _previousLocalDisplayMode;
+	private SwipeOpenGestureHandler? _paneSwipeHandler;
 
 	public Page()
 	{
@@ -408,7 +409,7 @@ public class Page : UserControl, INavigationLifecycle, INavigatorLifecycle, INav
 	public double LocalSideMenuOpenPaneLength
 	{
 		get => GetValue(LocalSideMenuOpenPaneLengthProperty);
-		private set => SetValue(LocalSideMenuOpenPaneLengthProperty, value);
+		internal set => SetValue(LocalSideMenuOpenPaneLengthProperty, value);
 	}
 
 	#endregion
@@ -525,6 +526,9 @@ public class Page : UserControl, INavigationLifecycle, INavigatorLifecycle, INav
 		{
 			_localSplitView.PaneClosing -= LocalSplitViewOnPaneClosing;
 		}
+
+		_paneSwipeHandler?.Dispose();
+		_paneSwipeHandler = null;
 	}
 
 	private void OnShellPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
@@ -590,6 +594,26 @@ public class Page : UserControl, INavigationLifecycle, INavigatorLifecycle, INav
 		if (_localSplitView != null)
 		{
 			_localSplitView.PaneClosing += LocalSplitViewOnPaneClosing;
+
+			_paneSwipeHandler?.Dispose();
+			_paneSwipeHandler = new SwipeOpenGestureHandler(
+				hitTestArea: this,
+				canSwipeOpen: () => LocalSideMenuBehaviorAllowsToggle() && !IsPaneOpen,
+				canSwipeClose: () => LocalSideMenuBehaviorAllowsToggle() && IsPaneOpen,
+				isPaneOpen: () => IsPaneOpen,
+				targetWidth: () => LocalSideMenuSize,
+				setOpenPaneLength: w => LocalSideMenuOpenPaneLength = w,
+				setPaneOpen: o =>
+				{
+					if (_localSplitView != null)
+						_localSplitView.SetCurrentValue(SplitView.IsPaneOpenProperty, o);
+				},
+				commitState: open =>
+				{
+					IsPaneOpen = open;
+					UpdateLocalSideMenu();
+				});
+			_paneSwipeHandler.Attach();
 		}
 	}
 
@@ -664,22 +688,20 @@ public class Page : UserControl, INavigationLifecycle, INavigatorLifecycle, INav
 		{
 			case ShellView.SideMenuBehaveType.Default:
 				LocalSideMenuOpenPaneLength = IsPaneOpen ? LocalSideMenuSize : 0;
-				// DisplayMode already set above
+				if (_localSplitView != null)
+					_localSplitView.SetCurrentValue(SplitView.IsPaneOpenProperty, IsPaneOpen);
 				break;
 			case ShellView.SideMenuBehaveType.Keep:
 				LocalSideMenuOpenPaneLength = LocalSideMenuSize;
 				IsPaneOpen = true;
-				// DisplayMode already set above
 				break;
 			case ShellView.SideMenuBehaveType.Closed:
 				LocalSideMenuOpenPaneLength = 0;
 				IsPaneOpen = false;
-				// DisplayMode already set above
 				break;
 			case ShellView.SideMenuBehaveType.Removed:
 				LocalSideMenuOpenPaneLength = 0;
 				IsPaneOpen = false;
-				// DisplayMode already set above
 				break;
 		}
 
@@ -713,6 +735,11 @@ public class Page : UserControl, INavigationLifecycle, INavigatorLifecycle, INav
 
 	private void LocalSplitViewOnPaneClosing(object? sender, CancelRoutedEventArgs e)
 	{
+		if (_paneSwipeHandler is { IsGestureActive: true })
+		{
+			e.Cancel = true;
+			return;
+		}
 		IsPaneOpen = false;
 	}
 

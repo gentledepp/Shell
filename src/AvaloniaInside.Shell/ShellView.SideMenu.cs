@@ -22,6 +22,19 @@ public partial class ShellView
 
 	public static readonly StyledProperty<double> DefaultSideMenuSizeProperty = AvaloniaProperty.Register<ShellView,double>(nameof(DefaultSideMenuSize), 250);
 
+	#region SwipeToOpenSideMenuEnabled
+
+	public static readonly StyledProperty<bool> SwipeToOpenSideMenuEnabledProperty =
+		AvaloniaProperty.Register<ShellView, bool>(nameof(SwipeToOpenSideMenuEnabled), defaultValue: true);
+
+	public bool SwipeToOpenSideMenuEnabled
+	{
+		get => GetValue(SwipeToOpenSideMenuEnabledProperty);
+		set => SetValue(SwipeToOpenSideMenuEnabledProperty, value);
+	}
+
+	#endregion
+
 	public double DefaultSideMenuSize
     {
 		get { return GetValue(DefaultSideMenuSizeProperty);}
@@ -278,7 +291,7 @@ public partial class ShellView
 		{
 			// Hide global side menu completely when page has its own pane
 			_splitView.OpenPaneLength = 0;
-			_splitView.IsPaneOpen = false;
+			_splitView.SetCurrentValue(SplitView.IsPaneOpenProperty, false);
 			NavigationBar.HasSideMenuOption = false;
 			return;
 		}
@@ -287,23 +300,23 @@ public partial class ShellView
 		{
 			case SideMenuBehaveType.Default:
 				_splitView.OpenPaneLength = SideMenuPresented ? SideMenuSize : 0;
-				_splitView.IsPaneOpen = SideMenuPresented;
+				_splitView.SetCurrentValue(SplitView.IsPaneOpenProperty, SideMenuPresented);
 				NavigationBar.HasSideMenuOption = true;
 				break;
 			case SideMenuBehaveType.Keep:
 				_splitView.OpenPaneLength = SideMenuSize;
-				_splitView.IsPaneOpen = true;
+				_splitView.SetCurrentValue(SplitView.IsPaneOpenProperty, true);
 				NavigationBar.HasSideMenuOption = false;
 				break;
 			case SideMenuBehaveType.Closed:
 				_splitView.OpenPaneLength = 0;
-				_splitView.IsPaneOpen = true;
+				_splitView.SetCurrentValue(SplitView.IsPaneOpenProperty, true);
 				NavigationBar.HasSideMenuOption = true;
 				break;
             case SideMenuBehaveType.Removed:
 				_splitView.OpenPaneLength = 0;
 				_splitView.CompactPaneLength = 0;
-                _splitView.IsPaneOpen = false;
+                _splitView.SetCurrentValue(SplitView.IsPaneOpenProperty, false);
                 NavigationBar.HasSideMenuOption = false;
                 break;
         }
