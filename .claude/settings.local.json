@@ -6,7 +6,8 @@
       "Bash(dotnet test:*)",
       "Bash(mkdir:*)",
       "Bash(ls:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(find /mnt/c/code_gh/avalonia_gd/src/Avalonia.Themes.Fluent -name \"*SplitView*\" -type f 2>/dev/null | head -10)"
     ],
     "deny": []
   }

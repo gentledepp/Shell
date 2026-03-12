@@ -3,7 +3,7 @@
 		<TargetFrameworks>net10.0;net9.0</TargetFrameworks>
 		<Nullable>enable</Nullable>
 		<LangVersion>latest</LangVersion>
-		<Version>1.3.2-optiq09</Version>
+		<Version>1.3.2-optiq10</Version>
 		<Title>Shell view for Avalonia</Title>
 		<Description>Shell reduces the complexity of mobile/desktop application development by providing the fundamental features that most applications require</Description>
 		<Copyright>AvaloniaInside</Copyright>
@@ -15,6 +15,8 @@
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 
 		<PackageReleaseNotes>
+			#1.3.2-optiq10
+			- swipe gesture handler blocked scrolling down a listview in left third of screen
 			#1.3.2-optiq09
 			- TabStripItem visibility is bound to its SideMenuItem visibility
 			#1.3.2-optiq08
