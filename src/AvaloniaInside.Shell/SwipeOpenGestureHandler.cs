@@ -161,21 +161,21 @@ public sealed class SwipeOpenGestureHandler : IDisposable
          // Must be more horizontal than vertical
          if (absDy > absDx)
          {
-            CancelDrag(e.Pointer);
+            CancelDrag();
             return;
          }
 
          // For swipe-to-open, must be moving right (positive deltaX after RTL inversion)
          if (!_isSwipeToClose && deltaX <= 0)
          {
-            CancelDrag(e.Pointer);
+            CancelDrag();
             return;
          }
 
          // For swipe-to-close, must be moving left (negative deltaX after RTL inversion)
          if (_isSwipeToClose && deltaX >= 0)
          {
-            CancelDrag(e.Pointer);
+            CancelDrag();
             return;
          }
 
@@ -297,11 +297,12 @@ public sealed class SwipeOpenGestureHandler : IDisposable
       }
    }
 
-   private void CancelDrag(IPointer pointer)
+   private void CancelDrag()
    {
       _isDragging = false;
       _directionLocked = false;
-      pointer.Capture(null);
+      // Do NOT call pointer.Capture(null) here — we never captured,
+      // so releasing would steal another control's capture (e.g. ScrollViewer).
    }
 
    private void RecordVelocitySample(double x)
