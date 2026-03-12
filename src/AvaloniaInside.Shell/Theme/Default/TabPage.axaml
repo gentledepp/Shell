@@ -33,7 +33,13 @@
 				          ItemTemplate="{TemplateBinding ItemTemplate}"
 				          ItemsPanel="{TemplateBinding ItemsPanel}"
 				          ItemsSource="{TemplateBinding ItemsSource}"
-				          Padding="{TemplateBinding TabSafePadding}"></TabStrip>
+				          Padding="{TemplateBinding TabSafePadding}">
+					<TabStrip.Styles>
+						<Style Selector="TabStripItem">
+							<Setter Property="IsVisible" Value="{Binding IsVisible}" />
+						</Style>
+					</TabStrip.Styles>
+				</TabStrip>
 			</ControlTemplate>
 		</Setter>
 		<Setter Property="SelectedContentTemplate">

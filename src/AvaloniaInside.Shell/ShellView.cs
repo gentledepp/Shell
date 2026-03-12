@@ -520,6 +520,7 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
         await (_contentView?.PushViewAsync(view, navigateType, cancellationToken) ?? Task.CompletedTask);
         AttachedNavigationBar?.UpdateView(Navigator.CurrentChain?.Instance);
         SelectSideMenuItem();
+        SyncTabVisibility();
         UpdateBinding();
         UpdateSideMenu();
     }
@@ -532,6 +533,7 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
         await (_modalView?.RemoveViewAsync(view, navigateType, cancellationToken) ?? Task.CompletedTask);
 
         SelectSideMenuItem();
+        SyncTabVisibility();
         UpdateBinding();
         UpdateSideMenu();
     }
@@ -542,6 +544,7 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
         await (_modalView?.ClearStackAsync(cancellationToken) ?? Task.CompletedTask);
 
         SelectSideMenuItem();
+        SyncTabVisibility();
         UpdateBinding();
         UpdateSideMenu();
     }

@@ -20,6 +20,10 @@
 				Content="Click on me"
 				Navigator.To="/second"
 				CommandParameter="Hello Parameters"></Button>
+		
+        <Button HorizontalAlignment="Center"
+                Content="Show/hide pets"
+				Click="ShowHidePetsClicked"></Button>
 
 		<Button HorizontalAlignment="Center" Content="Show dialog" Command="{Binding ShowDialogCommand}"></Button>
 		

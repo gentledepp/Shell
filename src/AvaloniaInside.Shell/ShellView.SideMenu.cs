@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -266,11 +267,29 @@ public partial class ShellView
 
 	#region SideMenu Item Management
 
-	public void AddSideMenuItem(SideMenuItem item) => _sideMenuItems.Add(item);
+	public void AddSideMenuItem(SideMenuItem item)
+	{
+		item.PropertyChanged += OnSideMenuItemPropertyChanged;
+		_sideMenuItems.Add(item);
+	}
 
-	public void InsertSideMenuItem(int index, SideMenuItem item) => _sideMenuItems.Insert(index, item);
+	public void InsertSideMenuItem(int index, SideMenuItem item)
+	{
+		item.PropertyChanged += OnSideMenuItemPropertyChanged;
+		_sideMenuItems.Insert(index, item);
+	}
 
-	public bool RemoveSideMenuItem(SideMenuItem item) => _sideMenuItems.Remove(item);
+	public bool RemoveSideMenuItem(SideMenuItem item)
+	{
+		item.PropertyChanged -= OnSideMenuItemPropertyChanged;
+		return _sideMenuItems.Remove(item);
+	}
+
+	private void OnSideMenuItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
+	{
+		if (e.PropertyName == nameof(SideMenuItem.IsVisible))
+			SyncTabVisibility();
+	}
 
 	#endregion
 
@@ -354,6 +373,50 @@ public partial class ShellView
 
 		if (GetCurrentBehave() != SideMenuBehaveType.Keep)
 			SideMenuPresented = false;
+	}
+
+	protected virtual void SyncTabVisibility()
+	{
+		var currentChain = Navigator.CurrentChain;
+		if (currentChain == null) return;
+
+		foreach (var chain in currentChain.GetAscendingNodes())
+		{
+			if (chain is HostNavigationChain hostChain)
+				SyncHostTabVisibility(hostChain, currentChain);
+		}
+	}
+
+	private void SyncHostTabVisibility(HostNavigationChain hostChain, NavigationChain currentChain)
+	{
+		NavigationChain? firstVisible = null;
+		var selectedIsHidden = false;
+
+		foreach (var node in hostChain.Nodes)
+		{
+			var route = node.Node.Route;
+
+			// Match SideMenuItems by exact path or descendant path
+			var matchingItems = _sideMenuItems
+				.Where(s => s.Path == route || s.Path.StartsWith(route + "/"))
+				.ToList();
+
+			if (matchingItems.Count > 0)
+				node.IsVisible = matchingItems.Any(m => m.IsVisible);
+
+			if (node.IsVisible && firstVisible == null)
+				firstVisible = node;
+
+			if (node == currentChain && !node.IsVisible)
+				selectedIsHidden = true;
+
+			// Recursively process nested HostNavigationChains
+			if (node is HostNavigationChain childHost)
+				SyncHostTabVisibility(childHost, currentChain);
+		}
+
+		if (selectedIsHidden && firstVisible != null)
+			_ = Navigator.NavigateAsync(firstVisible.Node.Route, NavigateType.HostedItemChange);
 	}
 
 	#endregion

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Linq;
 using Avalonia.Collections;
 using Avalonia.Metadata;
@@ -24,7 +25,10 @@ public partial class ShellView
 					foreach (var item in e.NewItems.Cast<IItem>())
 					{
 						if (item is SideMenuItem sideMenuItem)
+						{
+							sideMenuItem.PropertyChanged += OnSideMenuItemPropertyChanged;
 							_sideMenuItems.Insert(sideMenuIndex++, sideMenuItem);
+						}
 						else
 							OnAddItem(item);
 					}
@@ -41,7 +45,10 @@ public partial class ShellView
 				foreach (var item in e.OldItems.Cast<IItem>())
 				{
 					if (item is SideMenuItem sideMenuItem)
+					{
+						sideMenuItem.PropertyChanged -= OnSideMenuItemPropertyChanged;
 						_sideMenuItems.Remove(sideMenuItem);
+					}
 				}
 				break;
 
@@ -61,6 +68,7 @@ public partial class ShellView
 				AddRoute(route, string.Empty);
 				break;
 			case SideMenuItem sideMenuItem:
+				sideMenuItem.PropertyChanged += OnSideMenuItemPropertyChanged;
 				_sideMenuItems.Add(sideMenuItem);
 				break;
 		}
