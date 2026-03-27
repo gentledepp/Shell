@@ -5,7 +5,7 @@ using AvaloniaInside.Shell;
 
 namespace ShellBottomCustomNavigator.Views;
 
-public partial class SimpleDialog : Page
+public partial class SimpleDialog : AvaloniaInside.Shell.Page
 {
 	public SimpleDialog()
 	{

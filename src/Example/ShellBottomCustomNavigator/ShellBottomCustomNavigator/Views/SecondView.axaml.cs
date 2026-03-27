@@ -4,7 +4,7 @@ using AvaloniaInside.Shell;
 
 namespace ShellBottomCustomNavigator.Views;
 
-public partial class SecondView : Page
+public partial class SecondView : AvaloniaInside.Shell.Page
 {
 	public SecondView()
 	{

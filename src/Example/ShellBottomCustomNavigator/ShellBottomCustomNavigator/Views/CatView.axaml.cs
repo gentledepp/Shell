@@ -4,7 +4,7 @@ using AvaloniaInside.Shell;
 
 namespace ShellBottomCustomNavigator.Views;
 
-public partial class CatView : Page
+public partial class CatView : AvaloniaInside.Shell.Page
 {
 	public CatView()
 	{

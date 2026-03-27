@@ -7,7 +7,7 @@ using ShellBottomCustomNavigator.ViewModels.ShopViewModels;
 
 namespace ShellBottomCustomNavigator.Views.ShopViews;
 
-public partial class ProductCatalogFilterView : Page
+public partial class ProductCatalogFilterView : AvaloniaInside.Shell.Page
 {
 	public ProductCatalogFilterViewModel ViewModel { get; internal set; }
 

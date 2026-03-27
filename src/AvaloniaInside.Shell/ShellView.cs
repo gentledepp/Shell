@@ -379,7 +379,6 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
 
         if (EnableSafeArea && TopLevel.GetTopLevel(this) is { InsetsManager: { } insetsManager })
         {
-            insetsManager.DisplayEdgeToEdge = true;
             insetsManager.SafeAreaChanged += (s, e) => OnSafeEdgeSetup();
         }
 
@@ -438,7 +437,7 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
 
 	    TopLevel.SetAutoSafeAreaPadding(this, false);
 
-        if (TopLevel.GetTopLevel(this) is { InsetsManager: { DisplayEdgeToEdge: true } insetsManager })
+        if (TopLevel.GetTopLevel(this) is { InsetsManager: { } insetsManager })
             SafePadding = insetsManager.SafeAreaPadding;
     }
 

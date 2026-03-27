@@ -8,7 +8,7 @@ using AvaloniaInside.Shell;
 
 namespace ShellExample.Views;
 
-public partial class NavigationCancellationDemoPage : Page
+public partial class NavigationCancellationDemoPage : AvaloniaInside.Shell.Page
 {
     public NavigationCancellationDemoPage()
     {
