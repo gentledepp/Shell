@@ -1,6 +1,7 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-	<ControlTheme x:Key="{x:Type Page}" TargetType="Page">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:shell="clr-namespace:AvaloniaInside.Shell">
+	<ControlTheme x:Key="{x:Type shell:Page}" TargetType="shell:Page">
 		<Setter Property="Background" Value="{DynamicResource PageBackground}" />
 		<Setter Property="Template">
 			<ControlTemplate>

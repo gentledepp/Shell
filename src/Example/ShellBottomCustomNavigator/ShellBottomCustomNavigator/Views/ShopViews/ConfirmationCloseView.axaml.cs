@@ -5,7 +5,7 @@ using AvaloniaInside.Shell;
 
 namespace ShellBottomCustomNavigator.Views.ShopViews;
 
-public partial class ConfirmationCloseView : Page
+public partial class ConfirmationCloseView : AvaloniaInside.Shell.Page
 {
     public ConfirmationCloseView()
     {

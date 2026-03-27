@@ -4,7 +4,7 @@ using AvaloniaInside.Shell;
 
 namespace ShellBottomCustomNavigator.Views;
 
-public partial class DogView : Page
+public partial class DogView : AvaloniaInside.Shell.Page
 {
 	public DogView()
 	{

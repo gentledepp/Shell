@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ShellBottomCustomNavigator.Views;
 
-public partial class SettingView : Page
+public partial class SettingView : AvaloniaInside.Shell.Page
 {
 	public SettingView()
 	{

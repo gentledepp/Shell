@@ -4,7 +4,7 @@ using AvaloniaInside.Shell;
 
 namespace ShellBottomCustomNavigator.Views;
 
-public partial class ProfileView : Page
+public partial class ProfileView : AvaloniaInside.Shell.Page
 {
 	public ProfileView()
 	{

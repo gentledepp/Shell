@@ -14,7 +14,7 @@
 							         SelectedItem="{TemplateBinding SelectedItem, Mode=TwoWay}">
 								<ListBox.Styles>
 									<Style Selector="ListBoxItem">
-										<Setter Property="IsVisible" Value="{Binding IsVisible}" />
+										<Setter Property="IsVisible" Value="{ReflectionBinding IsVisible}" />
 									</Style>
 								</ListBox.Styles>
 								<ListBox.ItemsPanel>

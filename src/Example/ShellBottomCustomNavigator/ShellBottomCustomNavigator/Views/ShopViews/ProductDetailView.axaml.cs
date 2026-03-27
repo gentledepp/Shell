@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace ShellBottomCustomNavigator.Views.ShopViews;
-public partial class ProductDetailView : Page
+public partial class ProductDetailView : AvaloniaInside.Shell.Page
 {
     public ProductDetailView()
     {

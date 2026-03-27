@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ShellBottomCustomNavigator.Views;
 
-public partial class HomePage : Page
+public partial class HomePage : AvaloniaInside.Shell.Page
 {
 	public HomePage()
 	{
