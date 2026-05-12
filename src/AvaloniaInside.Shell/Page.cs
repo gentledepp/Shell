@@ -323,8 +323,12 @@ public class Page : UserControl, INavigationLifecycle, INavigatorLifecycle, INav
 	public bool IsPaneOpen
 	{
 		get => _isPaneOpen;
-		set => SetAndRaise(IsPaneOpenProperty, ref _isPaneOpen, value);
-	}
+        set
+        {
+            if(SetAndRaise(IsPaneOpenProperty, ref _isPaneOpen, value))
+				UpdateLocalSideMenu();
+        }
+    }
 
 	#endregion
 
