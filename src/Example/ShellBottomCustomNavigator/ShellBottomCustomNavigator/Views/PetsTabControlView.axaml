@@ -11,10 +11,10 @@
 	<TabControl.ItemTemplate>
 		<DataTemplate>
 			<Grid RowDefinitions="*,*" Width="80">
-				<i:Icon Value="{Binding Instance.Icon}"
+		<!--		<i:Icon Value="{Binding Instance.Icon}"
 				       HorizontalAlignment="Center"
 				       Height="24"
-				       Margin="2"/>
+				       Margin="2"/>-->
 				<TextBlock Grid.Row="1"
 				           DataContext="{Binding Instance}"
 				           Text="{Binding Path=(NavigationBar.Header)}"

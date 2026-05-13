@@ -9,7 +9,7 @@
 		<StackPanel>
 			<TextBlock Text="Versailles" FontWeight="ExtraBlack"></TextBlock>
 			<WrapPanel>
-				<i:Icon Value="fa-solid fa-cloud-sun" FontSize="28" />
+				<!--<i:Icon Value="fa-solid fa-cloud-sun" FontSize="28" />-->
 				<TextBlock Text="  Mostly Cloudy" FontWeight="Light"></TextBlock>
 			</WrapPanel>
 

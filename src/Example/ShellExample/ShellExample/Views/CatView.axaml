@@ -14,7 +14,7 @@
 		        Opacity="0.2"
 		        CornerRadius="20"
 		        Background="Black">
-			<i:Icon Value="fa-solid fa-cat" FontSize="180" />
+			<!--<i:Icon Value="fa-solid fa-cat" FontSize="180" />-->
 		</Border>
 	</Grid>
 </Page>

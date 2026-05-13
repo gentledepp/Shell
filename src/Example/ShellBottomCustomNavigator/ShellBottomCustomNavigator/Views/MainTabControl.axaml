@@ -19,7 +19,7 @@
                 <ControlTemplate>
                     <Grid Background="{TemplateBinding Background}" Margin="0,40,0,0" >
                         <Viewbox x:Name="PART_IconArea">
-                            <i:Icon x:Name="PART_Icon"/>
+                            <!--<i:Icon x:Name="PART_Icon"/>-->
                         </Viewbox>
                         <TextBlock x:Name="PART_Name" DataContext="{Binding Instance}"/>
                     </Grid>
@@ -35,9 +35,9 @@
                     </Transitions>
                 </Setter>
             </Style>
-            <Style Selector="^ /template/  i|Icon#PART_Icon">
+            <!--<Style Selector="^ /template/  i|Icon#PART_Icon">
                 <Setter Property="Value" Value="{Binding Instance.Icon}"/>
-            </Style>
+            </Style>-->
             <Style  Selector="^ /template/  TextBlock#PART_Name">
                 <Setter Property="Text" Value="{Binding Path=(NavigationBar.Header)}"/>
                 <Setter Property="HorizontalAlignment" Value="Center"/>

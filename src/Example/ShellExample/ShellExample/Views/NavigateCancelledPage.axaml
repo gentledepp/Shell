@@ -7,7 +7,7 @@
              x:Class="ShellExample.Views.NavigateCancelledPage"
              NavigationBar.Header="Navigate Cancelled">
 	<NavigationBar.HeaderIcon>
-		<i:Icon Value="fa-solid fa-xmark" />
+		<!--<i:Icon Value="fa-solid fa-xmark" />-->
 	</NavigationBar.HeaderIcon>
 	
 	<StackPanel HorizontalAlignment="Center"

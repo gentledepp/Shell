@@ -7,7 +7,7 @@
              x:Class="ShellExample.Views.SettingView"
              NavigationBar.Header="Settings">
 	<NavigationBar.HeaderIcon>
-		<i:Icon Value="fa-solid fa-user" />
+		<!--<i:Icon Value="fa-solid fa-user" />-->
 	</NavigationBar.HeaderIcon>
 
 	<Grid RowDefinitions="35,35,35,35,35,*" ColumnDefinitions="*,*" Margin="10">

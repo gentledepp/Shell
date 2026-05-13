@@ -7,7 +7,7 @@
              x:Class="ShellExample.Views.NavigationCancellationDemoPage"
              NavigationBar.Header="Navigation Cancellation Demo">
     <NavigationBar.HeaderIcon>
-        <i:Icon Value="fa-solid fa-flask" />
+        <!--<i:Icon Value="fa-solid fa-flask" />-->
     </NavigationBar.HeaderIcon>
 
     <ScrollViewer>

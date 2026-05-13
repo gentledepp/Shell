@@ -30,19 +30,19 @@
 			<ListBox.ItemTemplate>
 				<DataTemplate>
 					<StackPanel Orientation="Horizontal">
-						<i:Icon Value="fa-solid fa-check" />
+						<!--<i:Icon Value="fa-solid fa-check" />-->
 						<TextBlock Text="{ReflectionBinding .}" />
 					</StackPanel>
 				</DataTemplate>
 			</ListBox.ItemTemplate>
 
 			<ListBox.Styles>
-				<Style Selector="ListBoxItem i|Icon">
+				<!--<Style Selector="ListBoxItem i|Icon">
 					<Setter Property="IsVisible" Value="False"></Setter>
 				</Style>
 				<Style Selector="ListBoxItem:selected i|Icon">
 					<Setter Property="IsVisible" Value="True"></Setter>
-				</Style>
+				</Style>-->
 			</ListBox.Styles>
 		</ListBox>
 		<StackPanel Grid.Row="2" Height="40">

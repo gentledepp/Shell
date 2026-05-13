@@ -13,7 +13,7 @@
 		<converters:BitmapAssetValueConverter x:Key="variableImage"/>
 	</Page.Resources>
 	<NavigationBar.HeaderIcon>
-		<i:Icon Value="fa-solid fa-tag" />
+		<!--<i:Icon Value="fa-solid fa-tag" />-->
 	</NavigationBar.HeaderIcon>
 	<NavigationBar.Item>
 		<Button Content="Filter"

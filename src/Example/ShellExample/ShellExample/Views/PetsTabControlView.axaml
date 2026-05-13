@@ -9,7 +9,7 @@
          Classes="HeadTab"
          NavigationBar.Header="Pets">
 	<NavigationBar.HeaderIcon>
-		<i:Icon Value="fa-solid fa-paw"></i:Icon>
+		<!--<i:Icon Value="fa-solid fa-paw"></i:Icon>-->
 	</NavigationBar.HeaderIcon>
 	<TabPage.ItemTemplate>
 		<DataTemplate>

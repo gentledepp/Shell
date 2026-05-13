@@ -13,10 +13,10 @@
 	<TabControl.ItemTemplate>
 		<DataTemplate>
 			<Grid RowDefinitions="*,*" Width="70">
-				<i:Icon Value="{ReflectionBinding Instance.Icon}"
+				<!--<i:Icon Value="{ReflectionBinding Instance.Icon}"
 				       HorizontalAlignment="Center"
 				       Height="24"
-				       Margin="2"/>
+				       Margin="2"/>-->
 				<TextBlock Grid.Row="1"
 				           DataContext="{ReflectionBinding Instance}"
 				           Text="{ReflectionBinding Path=(NavigationBar.Header)}"

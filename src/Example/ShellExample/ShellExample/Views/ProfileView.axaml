@@ -7,7 +7,7 @@
              x:Class="ShellExample.Views.ProfileView"
              NavigationBar.Header="Profile">
 	<NavigationBar.HeaderIcon>
-		<i:Icon Value="fa-solid fa-user" />
+		<!--<i:Icon Value="fa-solid fa-user" />-->
 	</NavigationBar.HeaderIcon>
 	
 	Welcome to Avalonia!

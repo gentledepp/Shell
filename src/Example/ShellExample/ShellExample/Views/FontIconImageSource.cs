@@ -1,6 +1,6 @@
 ﻿using Avalonia.Media;
 using Avalonia;
-using Projektanker.Icons.Avalonia;
+//using Projektanker.Icons.Avalonia;
 
 namespace ShellExample.Views;
 internal class FontIconImageSource : DrawingImage
@@ -63,7 +63,7 @@ internal class FontIconImageSource : DrawingImage
 
     private void HandleValueChanged()
     {
-        var iconModel = IconProvider.Current.GetIcon(Value);
-        GetGeometryDrawing().Geometry = StreamGeometry.Parse(iconModel.Path);
+        //var iconModel = IconProvider.Current.GetIcon(Value);
+        //GetGeometryDrawing().Geometry = StreamGeometry.Parse(iconModel.Path);
     }
 }

@@ -21,7 +21,7 @@
 
 			<TextBlock Text="Omid Mafakher" FontWeight="Heavy" HorizontalAlignment="Center"></TextBlock>
 			<WrapPanel HorizontalAlignment="Center">
-				<i:Icon Value="fa-solid fa-location-dot" />
+				<!--<i:Icon Value="fa-solid fa-location-dot" />-->
 				<TextBlock Text="Versailles, France" FontWeight="UltraLight"></TextBlock>
 			</WrapPanel>
 		</StackPanel>

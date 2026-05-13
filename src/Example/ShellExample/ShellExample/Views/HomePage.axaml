@@ -9,7 +9,7 @@
 			 x:DataType="viewmodels:HomePageViewModel"
              NavigationBar.Header="Home">
 	<NavigationBar.HeaderIcon>
-		<i:Icon Value="fa-solid fa-house" />
+		<!--<i:Icon Value="fa-solid fa-house" />-->
 	</NavigationBar.HeaderIcon>
 	<StackPanel HorizontalAlignment="Center"
 	            VerticalAlignment="Center"
