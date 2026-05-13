@@ -36,7 +36,7 @@
 				          Padding="{TemplateBinding TabSafePadding}">
 					<TabStrip.Styles>
 						<Style Selector="TabStripItem">
-							<Setter Property="IsVisible" Value="{Binding IsVisible}" />
+							<Setter Property="IsVisible" Value="{ReflectionBinding IsVisible}" />
 						</Style>
 					</TabStrip.Styles>
 				</TabStrip>
