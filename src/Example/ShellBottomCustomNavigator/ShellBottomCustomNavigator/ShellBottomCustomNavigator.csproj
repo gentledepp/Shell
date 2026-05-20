@@ -15,12 +15,12 @@
         <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
         <PackageReference Include="Avalonia.Themes.Fluent" Version="$(AvaloniaVersion)" />
         <PackageReference Include="Avalonia.Fonts.Inter" Version="$(AvaloniaVersion)" />
-        <PackageReference Include="ReactiveUI.Avalonia" Version="11.3.8" />
+        <PackageReference Include="ReactiveUI.Avalonia" Version="12.0.1" />
         <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="[2.2.0-beta3]" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <!--<PackageReference Include="Projektanker.Icons.Avalonia" Version="9.0.1" />
         <PackageReference Include="Projektanker.Icons.Avalonia.FontAwesome" Version="9.0.1" />-->
-        <PackageReference Include="ReactiveUI" Version="22.2.1" />
+        <PackageReference Include="ReactiveUI" Version="23.2.1" />
     </ItemGroup>
 
     <ItemGroup>

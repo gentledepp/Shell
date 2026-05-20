@@ -63,7 +63,7 @@ And add back the project reference and dependencies:
   <PackageReference Include="FluentAssertions" Version="6.12.0" />
   <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
   <PackageReference Include="Avalonia.Themes.Fluent" Version="$(AvaloniaVersion)" />
-  <PackageReference Include="ReactiveUI.Avalonia" Version="11.3.8" />
+  <PackageReference Include="ReactiveUI.Avalonia" Version="12.0.1" />
 </ItemGroup>
 
 <ItemGroup>

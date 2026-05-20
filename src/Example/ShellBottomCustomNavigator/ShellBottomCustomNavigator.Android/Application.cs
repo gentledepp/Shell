@@ -19,6 +19,6 @@ public class Application : AvaloniaAndroidApplication<App>
         return base.CustomizeAppBuilder(builder)
             .WithInterFont()
             .UseShell()
-            .UseReactiveUI();
+            .UseReactiveUI(_ => { });
     }
 }
