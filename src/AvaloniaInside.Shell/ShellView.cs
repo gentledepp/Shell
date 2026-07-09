@@ -551,7 +551,16 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
     public Task ModalAsync(object instance, NavigateType navigateType, CancellationToken cancellationToken) =>
         _modalView?.PushViewAsync(instance, navigateType, cancellationToken) ?? Task.CompletedTask;
 
-    private async Task<bool> Back()
+    /// <summary>
+    /// Decides synchronously whether a back request will be handled by the shell and,
+    /// if so, kicks off the corresponding action.
+    /// The decision MUST be made synchronously: on Android the platform reads
+    /// <see cref="RoutedEventArgs.Handled"/> immediately after raising BackRequested and,
+    /// if it is still false, performs its default back action (finishing the activity).
+    /// Awaiting the navigation before returning would leave Handled==false at that point,
+    /// causing the app to close (or double-navigate) instead of navigating back.
+    /// </summary>
+    private bool Back()
     {
         if (ScreenSize == ScreenSizeType.Small && SideMenuPresented)
         {
@@ -559,9 +568,24 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
             return true;
         }
 
+        // Close an open page-local pane (e.g. a checklist's chapters menu) before navigating.
+        // The page-local SplitView also listens to TopLevel.BackRequested, but this handler runs
+        // first and would otherwise navigate (setting Handled=true) before the SplitView could
+        // close its own pane. We only dismiss when the pane is actually shown as an overlay and
+        // the current behavior allows toggling (i.e. it is not permanently pinned open).
+        if ((_modalView?.CurrentView ?? _contentView?.CurrentView) is Page { IsPaneOpen: true } page
+            && page.LocalSideMenuBehaviorAllowsToggle()
+            && page.LocalSideMenuDisplayMode is SplitViewDisplayMode.Overlay or SplitViewDisplayMode.CompactOverlay)
+        {
+            page.IsPaneOpen = false;
+            return true;
+        }
+
         var result = Navigator.HasItemInStack();
         if (result)
-            await Navigator.BackAsync();
+            // Fire-and-forget: the navigation (incl. animation) runs asynchronously,
+            // but we have already decided synchronously that the shell handles this back request.
+            _ = Navigator.BackAsync();
 
         return result;
     }
@@ -580,18 +604,20 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
         };
     }
 
-    private async void TopLevelOnBackRequested(object? sender, RoutedEventArgs e)
+    private void TopLevelOnBackRequested(object? sender, RoutedEventArgs e)
     {
-        e.Handled = await Back();
+        e.Handled = Back();
     }
 
-    private async void TopLevelOnKeyUp(object? sender, KeyEventArgs e)
+    private void TopLevelOnKeyUp(object? sender, KeyEventArgs e)
     {
         if (OperatingSystem.IsAndroid())
             return;
 
         if (e.Key == Key.Escape)
-            await Back();
+        {
+            Back();
+        }
     }
 
     private void SplitViewOnPaneClosing(object? sender, CancelRoutedEventArgs e)

@@ -3,7 +3,7 @@
 		<TargetFrameworks>net10.0;net9.0</TargetFrameworks>
 		<Nullable>enable</Nullable>
 		<LangVersion>latest</LangVersion>
-		<Version>1.4.1-optiq02</Version>
+		<Version>1.4.1-optiq03</Version>
 		<Title>Shell view for Avalonia</Title>
 		<Description>Shell reduces the complexity of mobile/desktop application development by providing the fundamental features that most applications require</Description>
 		<Copyright>AvaloniaInside</Copyright>
@@ -15,6 +15,11 @@
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 
 		<PackageReleaseNotes>
+			#1.4.1-optiq03
+			- Android/iOS: device back button and back-swipe gesture now handle BackRequested synchronously.
+			  Previously TopLevelOnBackRequested set e.Handled only after awaiting the navigation, so the
+			  platform read Handled==false and performed its default back action (closing the app) in parallel
+			  with the shell's own navigation. This caused intermittent "back closes the app / does nothing" bugs.
 			#1.4.1-optiq02
 			- reactiveui 12.0.1
 			#1.4.1-optiq01
