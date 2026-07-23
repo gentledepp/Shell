@@ -53,7 +53,7 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
     private ContentPresenter? _navigationBarPlaceHolder;
 
     private bool _loadedFlag;
-    private bool _topLevelEventFlag;
+    private TopLevel? _attachedTopLevel;
     private SwipeOpenGestureHandler? _sideMenuSwipeHandler;
 
     #endregion
@@ -365,12 +365,10 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
     {
         base.OnLoaded(e);
 
-        if (TopLevel.GetTopLevel(this) is { } topLevel && !_topLevelEventFlag)
-        {
-            topLevel.BackRequested += TopLevelOnBackRequested;
-            topLevel.KeyUp += TopLevelOnKeyUp;
-            _topLevelEventFlag = true;
-        }
+        // On Android the Activity (and its TopLevel) is destroyed and recreated while the shell
+        // keeps living, so TopLevel-bound events must be re-wired on every TopLevel change -
+        // otherwise a back press reaches no handler and closes the app.
+        AttachTopLevelEvents(TopLevel.GetTopLevel(this));
 
         if (DefaultRoute != null  && !_loadedFlag)
         {
@@ -378,10 +376,9 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
             _loadedFlag = true;
         }
 
-        if (EnableSafeArea && TopLevel.GetTopLevel(this) is { InsetsManager: { } insetsManager })
-        {
-            insetsManager.SafeAreaChanged += (s, e) => OnSafeEdgeSetup();
-        }
+        // recreate the handler disposed in OnUnloaded - re-attachment does not re-run OnApplyTemplate
+        if (_sideMenuSwipeHandler is null)
+            SetupSideMenuSwipeHandler();
 
         OnSafeEdgeSetup();
     }
@@ -389,9 +386,46 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
     protected override void OnUnloaded(RoutedEventArgs e)
     {
         base.OnUnloaded(e);
+        DetachTopLevelEvents();
         _sideMenuSwipeHandler?.Dispose();
         _sideMenuSwipeHandler = null;
     }
+
+    private void AttachTopLevelEvents(TopLevel? topLevel)
+    {
+        if (ReferenceEquals(_attachedTopLevel, topLevel))
+            return;
+
+        DetachTopLevelEvents();
+
+        if (topLevel is null)
+            return;
+
+        topLevel.BackRequested += TopLevelOnBackRequested;
+        topLevel.KeyUp += TopLevelOnKeyUp;
+
+        if (topLevel.InsetsManager is { } insetsManager)
+            insetsManager.SafeAreaChanged += InsetsManagerOnSafeAreaChanged;
+
+        _attachedTopLevel = topLevel;
+    }
+
+    private void DetachTopLevelEvents()
+    {
+        if (_attachedTopLevel is null)
+            return;
+
+        _attachedTopLevel.BackRequested -= TopLevelOnBackRequested;
+        _attachedTopLevel.KeyUp -= TopLevelOnKeyUp;
+
+        if (_attachedTopLevel.InsetsManager is { } insetsManager)
+            insetsManager.SafeAreaChanged -= InsetsManagerOnSafeAreaChanged;
+
+        _attachedTopLevel = null;
+    }
+
+    private void InsetsManagerOnSafeAreaChanged(object? sender, Avalonia.Controls.Platform.SafeAreaChangedArgs e)
+        => OnSafeEdgeSetup();
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
