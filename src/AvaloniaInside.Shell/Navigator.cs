@@ -63,9 +63,21 @@ public partial class Navigator : INavigator
         return false;
     }
 
-    public async Task RestoreStackAsync(
+    public Task RestoreStackAsync(
         IReadOnlyList<RestoreStackEntry> entries,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default) =>
+        RestoreStackCoreAsync(null, entries, cancellationToken);
+
+    public Task RestoreStackAsync(
+        string basePath,
+        IReadOnlyList<RestoreStackEntry> entries,
+        CancellationToken cancellationToken = default) =>
+        RestoreStackCoreAsync(basePath, entries, cancellationToken);
+
+    private async Task RestoreStackCoreAsync(
+        string? basePath,
+        IReadOnlyList<RestoreStackEntry> entries,
+        CancellationToken cancellationToken)
     {
         if (entries.Count == 0) return;
 
@@ -88,7 +100,42 @@ public partial class Navigator : INavigator
         {
             _navigating = true;
 
+            // Replace the root with the base (e.g. the tab shell) in the stack only - the base
+            // control is mounted silently beneath whatever is visible (e.g. the splash), so the
+            // user keeps looking at the current page until the front is ready to present.
+            NavigationStackChanges? baseChanges = null;
+            if (basePath != null)
+            {
+                // resolve like NavigateAsync would, incl. a host's default-node redirect
+                var baseUri = await _navigateStrategy.NavigateAsync(
+                    _stack.Current, CurrentUri, basePath, cancellationToken);
+                if (!Registrar.TryGetNode(baseUri.AbsolutePath, out var baseNode))
+                {
+                    Debug.WriteLine($"Warning: RestoreStackAsync cannot find base path '{basePath}'");
+                    return;
+                }
+
+                baseChanges = _stack.Push(baseNode, NavigateType.ReplaceRoot, baseUri);
+
+                if (_stack.Current is { } baseChain
+                    && HostedItemsHelper.GetHostControl(baseChain) is Avalonia.Controls.Control baseControl
+                    && ShellView.ContentView is { } cv
+                    && !cv.Children.Contains(baseControl))
+                {
+                    cv.AddSilentBase(baseControl);
+                }
+            }
+
             var changes = _stack.SeedRestore(seeds);
+
+            // the base chains initialise together with the eager seeded ones; the base never
+            // appeared, so it must not get a Disappear when the front presents
+            if (baseChanges != null)
+            {
+                for (var i = 0; i < baseChanges.NewNavigationChains.Count; i++)
+                    changes.NewNavigationChains.Insert(i, baseChanges.NewNavigationChains[i]);
+                changes.Previous = null;
+            }
 
             foreach (var newChain in changes.NewNavigationChains)
                 SetupPage(newChain);
@@ -102,10 +149,20 @@ public partial class Navigator : INavigator
                 hasFrontArgument = true;
             }
 
-            // Present the front on top of the existing base (kept in the tree) and deliver its
-            // argument. Deferred parents stay out of the visual tree until first revealed on back.
+            // Present the front on top of the base (kept in the tree) and deliver its argument.
+            // Deferred parents stay out of the visual tree until first revealed on back.
             await _updateStrategy.UpdateChangesAsync(
                 ShellView, changes, NavigateType.Normal, frontArgument, hasFrontArgument, cancellationToken);
+
+            // Only now that the front covers the screen, drop what the base replacement removed
+            // (e.g. the splash) - it sat beneath the front, so the removal is invisible.
+            if (baseChanges?.Removed is { Count: > 0 })
+            {
+                await _updateStrategy.UpdateChangesAsync(
+                    ShellView,
+                    new NavigationStackChanges { Removed = baseChanges.Removed },
+                    NavigateType.ReplaceRoot, null, false, cancellationToken);
+            }
         }
         finally
         {

@@ -41,8 +41,14 @@ public class DefaultNavigationUpdateStrategy : INavigationUpdateStrategy
 
 		// A deferred back-stack entry just materialized on back was never added to the visual tree.
 		// Insert it directly beneath the outgoing page so the pop reveal-transition brings it forward.
+		// Only freshly materialized chains qualify (on a Pop the front is in NewNavigationChains
+		// exactly when it was just materialized): any other front missing from the content stack is
+		// hosted - its view lives inside its host control (e.g. a tab page, which is the actual
+		// reveal target already in the stack) and re-parenting it would throw.
 		if (navigateType == NavigateType.Pop
-			&& changes.Front?.Instance is Control materializedFront
+			&& changes.Front is { } front
+			&& changes.NewNavigationChains.Contains(front)
+			&& front.Instance is Control materializedFront
 			&& shellView.ContentView is { } contentView
 			&& !contentView.Children.Contains(materializedFront))
 		{

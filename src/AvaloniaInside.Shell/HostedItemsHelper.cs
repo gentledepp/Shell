@@ -1,5 +1,7 @@
 using System;
 using System.Collections;
+using System.Linq;
+using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 
@@ -60,5 +62,46 @@ public static class HostedItemsHelper
 			return new SelectingItemsControlProxy(selectingItemsControl);
 
 		return null;
+	}
+
+	/// <summary>
+	/// Resolves the control that actually goes into the content stack for <paramref name="chain"/>:
+	/// the chain's own view for plain pages, or the outermost host control (e.g. the tab page) for
+	/// hosted chains - populating the host's items and selecting the chain on the way up.
+	/// </summary>
+	public static object GetHostControl(NavigationChain chain)
+	{
+		if (!chain.Hosted)
+			return chain.Instance;
+
+		var current = chain;
+		while (current != null)
+		{
+			if (current.Back is HostNavigationChain parent &&
+			    GetHostedItems(current.Back?.Instance) is { } hostedItems)
+			{
+				if ((hostedItems.Items ?? hostedItems.ItemsSource) is not IList collection)
+				{
+					hostedItems.ItemsSource = collection = new AvaloniaList<object>();
+				}
+
+				foreach (var hostedChildChain in parent.Nodes.Where(hostedChildChain =>
+					         !collection.Contains(hostedChildChain)))
+				{
+					collection.Add(hostedChildChain);
+				}
+
+				if (hostedItems is ISelectableHostItems selectingItemsControl)
+					selectingItemsControl.SelectedItem = current;
+			}
+			else
+			{
+				break;
+			}
+
+			current = current.Back;
+		}
+
+		return current?.Instance ?? chain.Instance;
 	}
 }

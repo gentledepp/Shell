@@ -146,6 +146,135 @@ public class DeferredBackStackTests
         window.Close();
     });
 
+    // ---------------------------------------------------------------------
+    // Device repro - base is a hosted tab (Host /main + tabs), not a plain page
+    // ---------------------------------------------------------------------
+
+    [Fact]
+    public Task Restore_OverHostedTabBase_BackTwice_ReachesTabAndKeepsAppOpen() => RunOnUiThread(async () =>
+    {
+        ProbePage.Reset();
+        var (navigator, shell) = CreateHostedRestoreShell();
+        var window = CreateThemedWindow(shell);
+        window.Show();
+        PumpUntilLoaded(shell);
+
+        var contentView = shell.ContentView.ShouldNotBeNull("the shell theme must template PART_ContentView");
+        contentView.PageTransition = null; // keep the headless run synchronous
+
+        // real restore flow: tab base first (host-correct), then seed + present the target
+        await navigator.NavigateAsync("/main/inspections", NavigateType.ReplaceRoot);
+        Pump();
+        var tabHost = contentView.CurrentView.ShouldBeOfType<TabPage>();
+
+        await navigator.RestoreStackAsync(new List<RestoreStackEntry>
+        {
+            new("/inspection", Deferred: true, _ => Task.FromResult<object?>("inspection-arg")),
+            new("/inspection/form", ArgumentFactory: _ => Task.FromResult<object?>("form-arg")),
+        });
+        Pump();
+
+        navigator.CurrentUri.AbsolutePath.ShouldBe("/inspection/form");
+        contentView.CurrentView.ShouldBeOfType<FormProbe>();
+
+        // first back -> materializes the deferred parent (works on device too)
+        await navigator.BackAsync();
+        Pump();
+        navigator.CurrentUri.AbsolutePath.ShouldBe("/inspection");
+        contentView.CurrentView.ShouldBeOfType<InspectionProbe>();
+
+        // the app-close gate: ShellView.Back() only handles the request when this is true
+        navigator.HasItemInStack().ShouldBeTrue("second back must stay in-app (tab base beneath)");
+
+        // second back -> the tab base; the hosted view must NOT be pulled out of its host -
+        // the reveal target is the host control (TabPage), which is already in the content stack
+        await navigator.BackAsync();
+        Pump();
+        navigator.CurrentUri.AbsolutePath.ShouldBe("/main/inspections");
+        contentView.CurrentView.ShouldBe(tabHost);
+        contentView.Children.ShouldNotContain(ProbePage.Created.OfType<MainProbe>().Single());
+
+        window.Close();
+    });
+
+    // ---------------------------------------------------------------------
+    // Base-aware restore - the splash stays visible until the front presents
+    // ---------------------------------------------------------------------
+
+    [Fact]
+    public Task RestoreStackAsync_WithBase_PresentsFrontDirectly_TabNeverVisible() => RunOnUiThread(async () =>
+    {
+        ProbePage.Reset();
+        var (navigator, shell) = CreateHostedRestoreShell();
+        var window = CreateThemedWindow(shell);
+        window.Show();
+        PumpUntilLoaded(shell);
+
+        var contentView = shell.ContentView.ShouldNotBeNull("the shell theme must template PART_ContentView");
+        contentView.PageTransition = null; // keep the headless run synchronous
+
+        await navigator.NavigateAsync("/splash");
+        Pump();
+        contentView.CurrentView.ShouldBeOfType<SplashProbe>();
+
+        // record every view that becomes visible from here on
+        var visibleViews = new List<object?>();
+        contentView.PropertyChanged += (_, e) =>
+        {
+            if (e.Property == StackContentView.CurrentViewProperty)
+                visibleViews.Add(e.NewValue);
+        };
+
+        await navigator.RestoreStackAsync("/main/inspections", new List<RestoreStackEntry>
+        {
+            new("/inspection", Deferred: true, _ => Task.FromResult<object?>("inspection-arg")),
+            new("/inspection/form", ArgumentFactory: _ => Task.FromResult<object?>("form-arg")),
+        });
+        Pump();
+
+        // landed directly on the form; the tab base never became the visible view
+        navigator.CurrentUri.AbsolutePath.ShouldBe("/inspection/form");
+        contentView.CurrentView.ShouldBeOfType<FormProbe>();
+        visibleViews.OfType<TabPage>().ShouldBeEmpty("the tab base must never be presented during restore");
+
+        // splash is gone; the tab base is mounted beneath, ready for back
+        contentView.Children.OfType<SplashProbe>().ShouldBeEmpty();
+        contentView.Children[0].ShouldBeOfType<TabPage>();
+
+        // the lazy back stack still works all the way down to the tab
+        await navigator.BackAsync();
+        Pump();
+        navigator.CurrentUri.AbsolutePath.ShouldBe("/inspection");
+        navigator.HasItemInStack().ShouldBeTrue();
+
+        await navigator.BackAsync();
+        Pump();
+        navigator.CurrentUri.AbsolutePath.ShouldBe("/main/inspections");
+        contentView.CurrentView.ShouldBeOfType<TabPage>();
+
+        window.Close();
+    });
+
+    private static (Navigator navigator, ShellView shell) CreateHostedRestoreShell()
+    {
+        var registrar = new NavigationRegistrar();
+        var navigator = new Navigator(
+            registrar,
+            new RelativeNavigateStrategy(registrar),
+            new DefaultNavigationUpdateStrategy(new AvaloniaInside.Shell.Presenters.PresenterProvider()),
+            new DefaultNavigationViewLocator());
+
+        registrar.RegisterRoute("splash", typeof(SplashProbe), NavigationNodeType.Page, NavigateType.Normal, null);
+        registrar.RegisterRoute("main", typeof(TabPage), NavigationNodeType.Host, NavigateType.ReplaceRoot, null);
+        registrar.RegisterRoute("main/inspections", typeof(MainProbe), NavigationNodeType.Page, NavigateType.Normal, null);
+        registrar.RegisterRoute("main/tasks", typeof(TasksProbe), NavigationNodeType.Page, NavigateType.Normal, null);
+        registrar.RegisterRoute("inspection", typeof(InspectionProbe), NavigationNodeType.Page, NavigateType.Normal, null);
+        registrar.RegisterRoute("inspection/form", typeof(FormProbe), NavigationNodeType.Page, NavigateType.Normal, null);
+
+        var shell = new ShellView(navigator);
+        return (navigator, shell);
+    }
+
     #region Headless harness
 
     private static Task RunOnUiThread(Func<Task> body) =>
@@ -180,6 +309,25 @@ public class DeferredBackStackTests
         Height = 800,
         Content = shell
     };
+
+    /// <summary>
+    /// Window with the real shell theme applied (scoped to this window only), so ShellView
+    /// templates PART_ContentView and hosted views get visually parented like on a device.
+    /// </summary>
+    private static Window CreateThemedWindow(ShellView shell)
+    {
+        // styles must be in place before the shell attaches, or its implicit
+        // ControlTheme is evaluated (and cached) as "none"
+        var window = new Window { Width = 1280, Height = 800 };
+        window.Styles.Add(new Avalonia.Themes.Fluent.FluentTheme());
+        window.Styles.Add(new Avalonia.Markup.Xaml.Styling.StyleInclude(
+            new Uri("avares://AvaloniaInside.Shell.Tests"))
+        {
+            Source = new Uri("avares://AvaloniaInside.Shell/Default.axaml")
+        });
+        window.Content = shell;
+        return window;
+    }
 
     private static void Pump()
     {
@@ -235,6 +383,8 @@ public class DeferredBackStackTests
     }
 
     private sealed class MainProbe : ProbePage;
+    private sealed class SplashProbe : ProbePage;
+    private sealed class TasksProbe : ProbePage;
     private sealed class InspectionProbe : ProbePage;
     private sealed class FormProbe : ProbePage;
 

@@ -44,6 +44,18 @@ public interface INavigator
 		System.Collections.Generic.IReadOnlyList<RestoreStackEntry> entries,
 		CancellationToken cancellationToken = default);
 
+	/// <summary>
+	/// Like <see cref="RestoreStackAsync(System.Collections.Generic.IReadOnlyList{RestoreStackEntry},CancellationToken)"/>,
+	/// but also replaces the root with <paramref name="basePath"/> (e.g. the tab shell) <b>without
+	/// presenting it</b>: whatever is currently visible (e.g. the splash) stays on screen until the
+	/// front entry is ready, so the base never flashes. The base is mounted beneath the front and
+	/// reachable on back; the previously visible page is removed once the front covers the screen.
+	/// </summary>
+	Task RestoreStackAsync(
+		string basePath,
+		System.Collections.Generic.IReadOnlyList<RestoreStackEntry> entries,
+		CancellationToken cancellationToken = default);
+
 	Task NavigateAsync(string path, CancellationToken cancellationToken = default);
 	Task NavigateAsync(string path, object? argument, CancellationToken cancellationToken = default);
 	Task NavigateAsync(

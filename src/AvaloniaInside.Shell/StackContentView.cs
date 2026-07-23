@@ -135,6 +135,19 @@ public class StackContentView : Panel
 		HasContent = Children.Count > 0;
 	}
 
+	/// <summary>
+	/// Inserts a view at the bottom of the stack without a transition. Used to mount the restored
+	/// base (e.g. the tab shell) beneath the currently visible page during cold-start restore.
+	/// </summary>
+	public void AddSilentBase(Control view)
+	{
+		if (Children.Contains(view))
+			Children.Remove(view);
+
+		Children.Insert(0, view);
+		HasContent = Children.Count > 0;
+	}
+
 
 	public Task ClearStackAsync(CancellationToken cancellationToken)
 	{
