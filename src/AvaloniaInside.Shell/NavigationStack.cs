@@ -1,12 +1,77 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace AvaloniaInside.Shell;
+
+/// <summary>
+/// One entry to seed into the back stack via <see cref="NavigationStack.SeedRestore"/>. A
+/// deferred entry is created without a view instance; its <paramref name="ArgumentFactory"/>
+/// resolves the argument when the entry is first revealed (on back).
+/// </summary>
+public sealed record RestoreSeedEntry(
+	NavigationNode Node,
+	Uri Uri,
+	bool Deferred,
+	Func<CancellationToken, Task<object?>>? ArgumentFactory);
 
 public class NavigationStack(INavigationViewLocator viewLocator)
 {
 	public NavigationChain? Current { get; set; }
+
+	/// <summary>
+	/// Seeds <paramref name="entries"/> (bottom-first) on top of the current stack; the last entry
+	/// becomes <see cref="Current"/> (the front). The existing <see cref="Current"/> is kept as the
+	/// base beneath them, so a host-backed root (e.g. the tab shell) navigated to beforehand stays
+	/// intact and reachable on back. Eager entries are instantiated immediately and reported in
+	/// <see cref="NavigationStackChanges.NewNavigationChains"/>; deferred entries are structural only
+	/// (no instance, not initialised) until first revealed on back. Used by the cold-start restore
+	/// to land directly on the target view while its parents hydrate lazily on back.
+	/// </summary>
+	public NavigationStackChanges SeedRestore(IReadOnlyList<RestoreSeedEntry> entries)
+	{
+		var changes = new NavigationStackChanges();
+		var previous = Current;
+		var back = Current;
+
+		foreach (var entry in entries)
+		{
+			NavigationChain chain;
+			if (entry.Deferred)
+			{
+				chain = new NavigationChain
+				{
+					Node = entry.Node,
+					Type = NavigateType.Normal,
+					Uri = entry.Uri,
+					Back = back,
+					IsDeferred = true,
+					DeferredArgumentFactory = entry.ArgumentFactory
+				};
+			}
+			else
+			{
+				chain = new NavigationChain
+				{
+					Node = entry.Node,
+					Instance = viewLocator.GetView(entry.Node),
+					Type = NavigateType.Normal,
+					Uri = entry.Uri,
+					Back = back
+				};
+				changes.NewNavigationChains.Add(chain);
+			}
+
+			back = chain;
+		}
+
+		Current = back;
+		changes.Front = Current;
+		changes.Previous = previous;
+		return changes;
+	}
 
 	public NavigationStackChanges Push(
 		NavigationNode node,

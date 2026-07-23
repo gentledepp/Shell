@@ -39,6 +39,16 @@ public class DefaultNavigationUpdateStrategy : INavigationUpdateStrategy
 		if (changes.Previous?.Instance is INavigationLifecycle oldInstanceLifecycle && !isSame)
 			await oldInstanceLifecycle.DisappearAsync(cancellationToken);
 
+		// A deferred back-stack entry just materialized on back was never added to the visual tree.
+		// Insert it directly beneath the outgoing page so the pop reveal-transition brings it forward.
+		if (navigateType == NavigateType.Pop
+			&& changes.Front?.Instance is Control materializedFront
+			&& shellView.ContentView is { } contentView
+			&& !contentView.Children.Contains(materializedFront))
+		{
+			contentView.InsertBeneathCurrent(materializedFront);
+		}
+
 		if (changes.Removed != null)
 			await InvokeRemoveAsync(shellView, changes.Removed, changes.Previous, navigateType, cancellationToken);
 

@@ -63,6 +63,56 @@ public partial class Navigator : INavigator
         return false;
     }
 
+    public async Task RestoreStackAsync(
+        IReadOnlyList<RestoreStackEntry> entries,
+        CancellationToken cancellationToken = default)
+    {
+        if (entries.Count == 0) return;
+
+        // Resolve each path to the registrar's node + uri so the seeded chain nodes are the same
+        // instances that Back/Pop later look up by uri (Pop matches chains by node reference).
+        var seeds = new List<RestoreSeedEntry>(entries.Count);
+        foreach (var entry in entries)
+        {
+            var uri = new Uri(Registrar.RootUri, entry.Path);
+            if (!Registrar.TryGetNode(uri.AbsolutePath, out var node))
+            {
+                Debug.WriteLine($"Warning: RestoreStackAsync cannot find path '{entry.Path}'");
+                return;
+            }
+
+            seeds.Add(new RestoreSeedEntry(node, uri, entry.Deferred, entry.ArgumentFactory));
+        }
+
+        try
+        {
+            _navigating = true;
+
+            var changes = _stack.SeedRestore(seeds);
+
+            foreach (var newChain in changes.NewNavigationChains)
+                SetupPage(newChain);
+
+            // The front is the last entry; resolve its argument eagerly for delivery.
+            object? frontArgument = null;
+            var hasFrontArgument = false;
+            if (entries[^1].ArgumentFactory is { } frontFactory)
+            {
+                frontArgument = await frontFactory(cancellationToken);
+                hasFrontArgument = true;
+            }
+
+            // Present the front on top of the existing base (kept in the tree) and deliver its
+            // argument. Deferred parents stay out of the visual tree until first revealed on back.
+            await _updateStrategy.UpdateChangesAsync(
+                ShellView, changes, NavigateType.Normal, frontArgument, hasFrontArgument, cancellationToken);
+        }
+        finally
+        {
+            _navigating = false;
+        }
+    }
+
     private async Task NotifyAsync(
         Uri origin,
         Uri newUri,
@@ -123,6 +173,23 @@ public partial class Navigator : INavigator
                 node,
                 finalNavigateType,
                 newUri);
+
+            // A deferred back-stack entry (seeded by RestoreStackAsync) is materialized the first
+            // time it becomes the front - i.e. when the user navigates back to it. Create its view
+            // and resolve its argument now (load-before-reveal) so it appears already populated.
+            if (stackChanges.Front is { IsDeferred: true } deferredFront)
+            {
+                deferredFront.Instance = _viewLocator.GetView(deferredFront.Node);
+                deferredFront.IsDeferred = false;
+                stackChanges.NewNavigationChains.Add(deferredFront);
+
+                if (deferredFront.DeferredArgumentFactory is { } factory)
+                {
+                    argument = await factory(cancellationToken);
+                    hasArgument = true;
+                    deferredFront.DeferredArgumentFactory = null;
+                }
+            }
 
             foreach (var newChain in stackChanges.NewNavigationChains)
             {

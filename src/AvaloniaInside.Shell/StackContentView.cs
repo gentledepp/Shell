@@ -121,6 +121,21 @@ public class StackContentView : Panel
 		return Task.CompletedTask;
 	}
 
+	/// <summary>
+	/// Inserts a view directly beneath the current (top) view without any transition. Used when a
+	/// deferred back-stack entry is materialized on back, so the existing pop transition can reveal
+	/// it as <see cref="CurrentView"/> once the outgoing page is removed.
+	/// </summary>
+	public void InsertBeneathCurrent(Control view)
+	{
+		if (Children.Contains(view))
+			Children.Remove(view);
+
+		Children.Insert(Children.Count > 0 ? Children.Count - 1 : 0, view);
+		HasContent = Children.Count > 0;
+	}
+
+
 	public Task ClearStackAsync(CancellationToken cancellationToken)
 	{
 		var current = CurrentView;
