@@ -75,14 +75,16 @@ public class DeferredBackStackTests
         await navigator.RestoreStackAsync(new List<RestoreStackEntry>
         {
             new("/inspection", Deferred: true, _ => Task.FromResult<object?>("inspection-arg")),
-            new("/inspection/form", ArgumentFactory: _ => Task.FromResult<object?>("form-arg")),
+            new("/inspection/form", ArgumentFactory: _ => Task.FromResult<object?>("form-arg"),
+                RestoreState: "form-state"),
         });
         Pump();
 
-        // landed directly on the form, initialised, appeared, argument delivered
+        // landed directly on the form, initialised, appeared, argument + restore state delivered
         navigator.CurrentUri.AbsolutePath.ShouldBe("/inspection/form");
         var form = ProbePage.Created.OfType<FormProbe>().ShouldHaveSingleItem();
         form.Argument.ShouldBe("form-arg");
+        form.RestoreState.ShouldBe("form-state");
         form.InitialiseCount.ShouldBe(1);
         form.AppearCount.ShouldBe(1);
 
@@ -115,7 +117,7 @@ public class DeferredBackStackTests
             {
                 inspectionArgCalls++;
                 return Task.FromResult<object?>("inspection-arg");
-            }),
+            }, RestoreState: "inspection-state"),
             new("/inspection/form", ArgumentFactory: _ => Task.FromResult<object?>("form-arg")),
         });
         Pump();
@@ -131,6 +133,7 @@ public class DeferredBackStackTests
         navigator.CurrentUri.AbsolutePath.ShouldBe("/inspection");
         var inspection = ProbePage.Created.OfType<InspectionProbe>().ShouldHaveSingleItem();
         inspection.Argument.ShouldBe("inspection-arg");
+        inspection.RestoreState.ShouldBe("inspection-state");
         inspection.InitialiseCount.ShouldBe(1);
         inspection.AppearCount.ShouldBe(1);
         inspectionArgCalls.ShouldBe(1);
@@ -348,7 +351,7 @@ public class DeferredBackStackTests
 
     #region Probe pages
 
-    private class ProbePage : UserControl, INavigationLifecycle
+    private class ProbePage : Page
     {
         public static readonly List<ProbePage> Created = new();
 
@@ -360,26 +363,26 @@ public class DeferredBackStackTests
 
         protected ProbePage() => Created.Add(this);
 
-        public Task InitialiseAsync(CancellationToken cancellationToken)
+        public override Task InitialiseAsync(CancellationToken cancellationToken)
         {
             InitialiseCount++;
             return Task.CompletedTask;
         }
 
-        public Task AppearAsync(CancellationToken cancellationToken)
+        public override Task AppearAsync(CancellationToken cancellationToken)
         {
             AppearCount++;
             return Task.CompletedTask;
         }
 
-        public Task ArgumentAsync(object args, CancellationToken cancellationToken)
+        public override Task ArgumentAsync(object args, CancellationToken cancellationToken)
         {
             Argument = args;
             return Task.CompletedTask;
         }
 
-        public Task DisappearAsync(CancellationToken cancellationToken) => Task.CompletedTask;
-        public Task TerminateAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+        public override Task DisappearAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+        public override Task TerminateAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
 
     private sealed class MainProbe : ProbePage;

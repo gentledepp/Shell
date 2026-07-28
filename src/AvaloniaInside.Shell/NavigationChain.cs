@@ -29,6 +29,12 @@ public class NavigationChain : INotifyPropertyChanged
    /// </summary>
    public Func<System.Threading.CancellationToken, System.Threading.Tasks.Task<object?>>? DeferredArgumentFactory { get; internal set; }
 
+   /// <summary>
+   /// <see cref="RestoreStackEntry.RestoreState"/> for a deferred entry, applied when it
+   /// materializes on back (mirrors <see cref="DeferredArgumentFactory"/>).
+   /// </summary>
+   public object? DeferredRestoreState { get; internal set; }
+
    public bool IsVisible
    {
       get => _isVisible;

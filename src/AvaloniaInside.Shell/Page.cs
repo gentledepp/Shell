@@ -473,6 +473,13 @@ public class Page : UserControl, INavigationLifecycle, INavigatorLifecycle, INav
 
 	public virtual Task AppearAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 	public virtual Task ArgumentAsync(object args, CancellationToken cancellationToken) => Task.CompletedTask;
+
+	/// <summary>
+	/// Restore state for the next <see cref="ArgumentAsync"/>, set by the navigator during a
+	/// cold-start restore and forwarded to an <see cref="IRestorable"/> view model. Null otherwise.
+	/// </summary>
+	public object? RestoreState { get; set; }
+
 	public virtual Task DisappearAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 	public virtual Task InitialiseAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 	public virtual Task TerminateAsync(CancellationToken cancellationToken) => Task.CompletedTask;

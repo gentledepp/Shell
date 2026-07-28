@@ -15,7 +15,8 @@ public sealed record RestoreSeedEntry(
 	NavigationNode Node,
 	Uri Uri,
 	bool Deferred,
-	Func<CancellationToken, Task<object?>>? ArgumentFactory);
+	Func<CancellationToken, Task<object?>>? ArgumentFactory,
+	object? RestoreState = null);
 
 public class NavigationStack(INavigationViewLocator viewLocator)
 {
@@ -48,15 +49,20 @@ public class NavigationStack(INavigationViewLocator viewLocator)
 					Uri = entry.Uri,
 					Back = back,
 					IsDeferred = true,
-					DeferredArgumentFactory = entry.ArgumentFactory
+					DeferredArgumentFactory = entry.ArgumentFactory,
+					DeferredRestoreState = entry.RestoreState
 				};
 			}
 			else
 			{
+				var instance = viewLocator.GetView(entry.Node);
+				if (instance is Page page)
+					page.RestoreState = entry.RestoreState;
+
 				chain = new NavigationChain
 				{
 					Node = entry.Node,
-					Instance = viewLocator.GetView(entry.Node),
+					Instance = instance,
 					Type = NavigateType.Normal,
 					Uri = entry.Uri,
 					Back = back

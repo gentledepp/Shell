@@ -11,11 +11,14 @@ namespace AvaloniaInside.Shell;
 /// created immediately; the front entry's <paramref name="ArgumentFactory"/> is awaited to supply
 /// its argument. When <paramref name="Deferred"/> is true the entry is seeded without a view and
 /// <paramref name="ArgumentFactory"/> is awaited only when the entry is first revealed on back.
+/// <paramref name="RestoreState"/> is handed to the view's <see cref="IRestorable"/> after its
+/// argument, so a restored page can rehydrate UI state.
 /// </summary>
 public sealed record RestoreStackEntry(
 	string Path,
 	bool Deferred = false,
-	Func<CancellationToken, Task<object?>>? ArgumentFactory = null);
+	Func<CancellationToken, Task<object?>>? ArgumentFactory = null,
+	object? RestoreState = null);
 
 public interface INavigator
 {

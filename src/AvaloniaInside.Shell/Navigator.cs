@@ -93,7 +93,7 @@ public partial class Navigator : INavigator
                 return;
             }
 
-            seeds.Add(new RestoreSeedEntry(node, uri, entry.Deferred, entry.ArgumentFactory));
+            seeds.Add(new RestoreSeedEntry(node, uri, entry.Deferred, entry.ArgumentFactory, entry.RestoreState));
         }
 
         try
@@ -239,6 +239,12 @@ public partial class Navigator : INavigator
                 deferredFront.Instance = _viewLocator.GetView(deferredFront.Node);
                 deferredFront.IsDeferred = false;
                 stackChanges.NewNavigationChains.Add(deferredFront);
+
+                if (deferredFront.Instance is Page deferredPage)
+                {
+                    deferredPage.RestoreState = deferredFront.DeferredRestoreState;
+                    deferredFront.DeferredRestoreState = null;
+                }
 
                 if (deferredFront.DeferredArgumentFactory is { } factory)
                 {
