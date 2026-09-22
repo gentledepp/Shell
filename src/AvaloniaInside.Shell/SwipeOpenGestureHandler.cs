@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Animation.Easings;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
@@ -15,13 +16,25 @@ namespace AvaloniaInside.Shell;
 /// </summary>
 public sealed class SwipeOpenGestureHandler : IDisposable
 {
-   private const double EdgeZoneFraction = 1.0 / 3.0;
-   private const double DirectionLockThreshold = 10;
+   // Distance the finger must travel before we commit to a swipe
+   private const double DirectionLockThreshold = 25;
+
+   // Max angle for a drag to count as a swipe. Generous normally,
+   // but stricter while (or just after) scrolling so an ongoing scroll needs a very
+   // deliberate near-horizontal swipe to open the pane.
+   private const double MaxSwipeAngleDegrees = 35;
+   private const double MaxSwipeAngleWhileScrollingDegrees = 15;
+   private static readonly double NormalSwipeTangent = Math.Tan(MaxSwipeAngleDegrees * Math.PI / 180.0);
+   private static readonly double ScrollingSwipeTangent = Math.Tan(MaxSwipeAngleWhileScrollingDegrees * Math.PI / 180.0);
+
    private const double VelocityThreshold = 800;
    private const double OpenPositionThreshold = 0.4;
    private const double ClosePositionThreshold = 0.6;
    private const int SnapAnimationDurationMs = 200;
    private const int VelocitySampleCount = 5;
+
+   // How long after scrolling the stricter swipe angle stays in effect
+   private const double ScrollCooldownMs = 400;
 
    private readonly Control _hitTestArea;
    private readonly Func<bool> _canSwipeOpen;
@@ -39,6 +52,12 @@ public sealed class SwipeOpenGestureHandler : IDisposable
    private double _currentDragWidth;
    private bool _attached;
    private bool _isAnimating;
+
+   private DateTime _lastScrollTime = DateTime.MinValue;
+
+   // Every open popup/flyout in the app, tracked by observing Popup.IsOpen globally
+   private readonly HashSet<Popup> _openPopups = new();
+   private IDisposable? _popupWatcher;
 
    /// <summary>
    /// True while a swipe gesture is in progress (dragging or snap-animating).
@@ -79,7 +98,12 @@ public sealed class SwipeOpenGestureHandler : IDisposable
       _hitTestArea.AddHandler(InputElement.PointerMovedEvent, OnPointerMoved, RoutingStrategies.Tunnel);
       _hitTestArea.AddHandler(InputElement.PointerReleasedEvent, OnPointerReleased, RoutingStrategies.Tunnel);
       _hitTestArea.AddHandler(InputElement.PointerCaptureLostEvent, OnPointerCaptureLost, RoutingStrategies.Tunnel);
+      _hitTestArea.AddHandler(InputElement.ScrollGestureEvent, OnScrollGesture, RoutingStrategies.Bubble, handledEventsToo: true);
+      _hitTestArea.AddHandler(InputElement.ScrollGestureInertiaStartingEvent, OnScrollInertiaStarting, RoutingStrategies.Bubble, handledEventsToo: true);
+      _hitTestArea.AddHandler(InputElement.ScrollGestureEndedEvent, OnScrollGestureEnded, RoutingStrategies.Bubble, handledEventsToo: true);
       _hitTestArea.SizeChanged += OnSizeChanged;
+
+      _popupWatcher = Popup.IsOpenProperty.Changed.AddClassHandler<Popup>(OnPopupIsOpenChanged);
    }
 
    public void Detach()
@@ -91,20 +115,95 @@ public sealed class SwipeOpenGestureHandler : IDisposable
       _hitTestArea.RemoveHandler(InputElement.PointerMovedEvent, OnPointerMoved);
       _hitTestArea.RemoveHandler(InputElement.PointerReleasedEvent, OnPointerReleased);
       _hitTestArea.RemoveHandler(InputElement.PointerCaptureLostEvent, OnPointerCaptureLost);
+      _hitTestArea.RemoveHandler(InputElement.ScrollGestureEvent, OnScrollGesture);
+      _hitTestArea.RemoveHandler(InputElement.ScrollGestureInertiaStartingEvent, OnScrollInertiaStarting);
+      _hitTestArea.RemoveHandler(InputElement.ScrollGestureEndedEvent, OnScrollGestureEnded);
       _hitTestArea.SizeChanged -= OnSizeChanged;
+
+      _popupWatcher?.Dispose();
+      _popupWatcher = null;
+      _openPopups.Clear();
    }
 
    public void Dispose() => Detach();
 
    private bool IsRtl => _hitTestArea.FlowDirection == Avalonia.Media.FlowDirection.RightToLeft;
 
+   private void OnPopupIsOpenChanged(Popup popup, AvaloniaPropertyChangedEventArgs e)
+   {
+      if (e.GetNewValue<bool>())
+         _openPopups.Add(popup);
+      else
+         _openPopups.Remove(popup);
+   }
+
+   private bool IsPopupOpen()
+   {
+      _openPopups.RemoveWhere(p => !p.IsOpen); // ensure
+      return _openPopups.Count > 0;
+   }
+
+   /// <summary>
+   /// True while a descendant scrolled within the last <see cref="ScrollCooldownMs"/> ms
+   /// </summary>
+   private bool RecentlyScrolled =>
+      (DateTime.UtcNow - _lastScrollTime).TotalMilliseconds < ScrollCooldownMs;
+
+   private double CurrentSwipeTangent =>
+      RecentlyScrolled ? ScrollingSwipeTangent : NormalSwipeTangent;
+
+   private void OnScrollGesture(object? sender, Avalonia.Input.ScrollGestureEventArgs e)
+   {
+      _lastScrollTime = DateTime.UtcNow;
+
+      // If a scroll ends up owning this gesture while we were mid-drag toward
+      // opening, abandon the open so the two don't fight.
+      if (_isDragging && !_isSwipeToClose && !_isAnimating)
+      {
+         if (_directionLocked)
+         {
+            // We already opened the pane at width 0; snap it back closed so we
+            // don't leave a half-open overlay that swallows input.
+            _isDragging = false;
+            AnimateToState(false, _targetWidth());
+         }
+         else
+         {
+            CancelDrag();
+         }
+      }
+   }
+
+   private void OnScrollInertiaStarting(object? sender, Avalonia.Input.ScrollGestureInertiaStartingEventArgs e)
+   {
+      _lastScrollTime = DateTime.UtcNow;
+   }
+
+   private void OnScrollGestureEnded(object? sender, Avalonia.Input.ScrollGestureEndedEventArgs e)
+   {
+      _lastScrollTime = DateTime.UtcNow;
+   }
+
    private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
    {
-      if (_isDragging || _isAnimating) return;
+      if (_isAnimating) return;
+
+      // If e.g. a popup opened mid-drag and captured the pointer,
+      // the pane is left partly open and _isDragging stays true, recover here.
+      if (_isDragging)
+      {
+         RecoverStaleDrag();
+      }
 
       var pointerType = e.Pointer.Type;
       if (pointerType != PointerType.Touch && pointerType != PointerType.Mouse)
          return;
+
+      // Never run the swipe gesture while a popup/flyout is open
+      if (IsPopupOpen())
+      {
+         return;
+      }
 
       var point = e.GetPosition(_hitTestArea);
       var isPaneCurrentlyOpen = _isPaneOpen();
@@ -117,15 +216,6 @@ public sealed class SwipeOpenGestureHandler : IDisposable
       else
       {
          if (!_canSwipeOpen()) return;
-
-         // Check edge zone — left third of the screen (or right third for RTL)
-         var controlWidth = _hitTestArea.Bounds.Width;
-         var edgeZone = controlWidth * EdgeZoneFraction;
-         bool inEdgeZone = IsRtl
-            ? point.X >= controlWidth - edgeZone
-            : point.X <= edgeZone;
-
-         if (!inEdgeZone) return;
          _isSwipeToClose = false;
       }
 
@@ -158,8 +248,8 @@ public sealed class SwipeOpenGestureHandler : IDisposable
          if (absDx < DirectionLockThreshold && absDy < DirectionLockThreshold)
             return;
 
-         // Must be more horizontal than vertical
-         if (absDy > absDx)
+         // Must be at a sufficiently horizontal angle, stricter while scrolling
+         if (absDy > absDx * CurrentSwipeTangent)
          {
             CancelDrag();
             return;
@@ -305,6 +395,32 @@ public sealed class SwipeOpenGestureHandler : IDisposable
       // so releasing would steal another control's capture (e.g. ScrollViewer).
    }
 
+   /// <summary>
+   /// Restore the pane and gesture state to the pre-drag baseline after a gesture
+   /// was left dangling (no release/capture-lost)
+   /// </summary>
+   private void RecoverStaleDrag()
+   {
+      var restoreOpen = _isSwipeToClose;
+      _isDragging = false;
+      _directionLocked = false;
+      _isAnimating = false;
+
+      var target = _targetWidth();
+      if (restoreOpen)
+      {
+         _setOpenPaneLength(target);
+         _setPaneOpen(true);
+         _commitState(true);
+      }
+      else
+      {
+         _setOpenPaneLength(0);
+         _setPaneOpen(false);
+         _commitState(false);
+      }
+   }
+
    private void RecordVelocitySample(double x)
    {
       _velocitySamples.Add((DateTime.UtcNow, x));
@@ -357,8 +473,6 @@ public sealed class SwipeOpenGestureHandler : IDisposable
          {
             timer.Stop();
             FinalizeState(open, targetWidth);
-            _isAnimating = false;
-            _directionLocked = false;
          }
       };
       timer.Start();
@@ -371,20 +485,28 @@ public sealed class SwipeOpenGestureHandler : IDisposable
          _setOpenPaneLength(targetWidth);
          _setPaneOpen(true);
          _commitState(true);
+
+         // Right after opening, the SplitView's light-dismiss raises PaneClosing
+         // (the release landed outside the pane). Keep IsGestureActive true through
+         // those on this event cycle so SplitViewOnPaneClosing cancels them and the
+         // pane we just opened stays open; clear on the next input tick.
+         Dispatcher.UIThread.Post(() =>
+         {
+            _isAnimating = false;
+            _directionLocked = false;
+         }, DispatcherPriority.Input);
       }
       else
       {
+         // Clear the flags BEFORE toggling IsPaneOpen so SplitViewOnPaneClosing lets
+         // our own close through. Otherwise it cancels the close and the SplitView
+         // stays open at width=0 (leaving the overlay/light-dismiss layer)
+         _isAnimating = false;
+         _directionLocked = false;
+
          _setOpenPaneLength(0);
          _setPaneOpen(false);
          _commitState(false);
-      }
-
-      // If there was no animation (immediate finalize), clear direction lock
-      // on next dispatcher tick so IsGestureActive stays true through any
-      // SplitView PaneClosing events that fire on the same event cycle.
-      if (!_isAnimating)
-      {
-         Dispatcher.UIThread.Post(() => _directionLocked = false, DispatcherPriority.Input);
       }
    }
 }
