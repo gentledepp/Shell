@@ -268,7 +268,8 @@ public class NavigationStack(INavigationViewLocator viewLocator)
 		NavigateType type,
 		Uri uri)
 	{
-		var changes = new NavigationStackChanges();
+		// the page we leave (side menu / tab switch) must get DisappearAsync, as with every other navigation type
+		var changes = new NavigationStackChanges { Previous = Current };
 		var found = Current?.GetAscendingNodes()
 			.OfType<HostNavigationChain>()
 			.SelectMany(h => h.AggregatedNodes)
