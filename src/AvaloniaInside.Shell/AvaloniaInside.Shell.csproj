@@ -3,7 +3,7 @@
 		<TargetFrameworks>net10.0;net9.0</TargetFrameworks>
 		<Nullable>enable</Nullable>
 		<LangVersion>latest</LangVersion>
-		<Version>1.4.1-optiq09</Version>
+		<Version>1.4.1-optiq10</Version>
 		<Title>Shell view for Avalonia</Title>
 		<Description>Shell reduces the complexity of mobile/desktop application development by providing the fundamental features that most applications require</Description>
 		<Copyright>AvaloniaInside</Copyright>
@@ -15,6 +15,8 @@
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 
 		<PackageReleaseNotes>
+			#1.4.1-optiq10
+			- same as 1.4.1-optiq09, which was published from a stale build by mistake (unlisted)
 			#1.4.1-optiq09
 			- Side-menu navigation and tab switches (NavigateType.HostedItemChange) now report the page that is left
 			  as Previous, so it gets DisappearAsync like with every other navigation type (gentledepp/Shell#1)
