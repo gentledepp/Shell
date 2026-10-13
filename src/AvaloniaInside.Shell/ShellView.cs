@@ -54,6 +54,8 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
 
     private bool _loadedFlag;
     private TopLevel? _attachedTopLevel;
+    // an Esc key down since the last Esc key up was used by something else (closing a dropdown, a search...)
+    private bool _escapeKeyDownHandled;
     private SwipeOpenGestureHandler? _sideMenuSwipeHandler;
 
     #endregion
@@ -402,6 +404,7 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
             return;
 
         topLevel.BackRequested += TopLevelOnBackRequested;
+        topLevel.AddHandler(KeyDownEvent, TopLevelOnKeyDown, RoutingStrategies.Bubble, handledEventsToo: true);
         topLevel.KeyUp += TopLevelOnKeyUp;
 
         if (topLevel.InsetsManager is { } insetsManager)
@@ -416,6 +419,7 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
             return;
 
         _attachedTopLevel.BackRequested -= TopLevelOnBackRequested;
+        _attachedTopLevel.RemoveHandler(KeyDownEvent, TopLevelOnKeyDown);
         _attachedTopLevel.KeyUp -= TopLevelOnKeyUp;
 
         if (_attachedTopLevel.InsetsManager is { } insetsManager)
@@ -532,6 +536,11 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
 
     public INavigator Navigator { get; }
 
+    /// <summary>
+    /// Gets the page the shell shows: in a host such as a <see cref="TabPage"/>, the page of its selected item
+    /// </summary>
+    public Control? CurrentPage => Navigator.CurrentChain?.Instance as Control;
+
     private NavigationBar? FindNavigationBar()
     {
 	    if (NavigationBarAttachType == NavigationBarAttachType.ToShell) return _navigationBar;
@@ -643,6 +652,13 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
         e.Handled = Back();
     }
 
+    private void TopLevelOnKeyDown(object? sender, KeyEventArgs e)
+    {
+        // held down, Esc repeats its key down: any of them used counts. Another key resets it, in case
+        // the key up of an earlier Esc never came (e.g. the window lost focus)
+        _escapeKeyDownHandled = e.Key == Key.Escape && (_escapeKeyDownHandled || e.Handled);
+    }
+
     private void TopLevelOnKeyUp(object? sender, KeyEventArgs e)
     {
         if (OperatingSystem.IsAndroid())
@@ -650,7 +666,10 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
 
         if (e.Key == Key.Escape)
         {
-            Back();
+            // on the key up, so holding Esc goes back only once; not if the key down closed something
+            if (!_escapeKeyDownHandled)
+                Back();
+            _escapeKeyDownHandled = false;
         }
     }
 
