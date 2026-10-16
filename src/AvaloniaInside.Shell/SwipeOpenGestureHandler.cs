@@ -7,6 +7,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 namespace AvaloniaInside.Shell;
 
@@ -68,6 +69,17 @@ public sealed class SwipeOpenGestureHandler : IDisposable
 
    // Velocity tracking
    private readonly List<(DateTime time, double x)> _velocitySamples = new();
+
+   /// <summary>
+   /// Set on a control whose mouse or touch drags must not start a swipe, e.g. a drawing canvas or signature pad.
+   /// TextBox, SelectableTextBlock, Slider, ScrollBar and Thumb (incl. GridSplitter) are excluded already.
+   /// </summary>
+   public static readonly AttachedProperty<bool> IsSwipeExcludedProperty =
+      AvaloniaProperty.RegisterAttached<SwipeOpenGestureHandler, Visual, bool>("IsSwipeExcluded");
+
+   public static bool GetIsSwipeExcluded(Visual visual) => visual.GetValue(IsSwipeExcludedProperty);
+
+   public static void SetIsSwipeExcluded(Visual visual, bool value) => visual.SetValue(IsSwipeExcludedProperty, value);
 
    public SwipeOpenGestureHandler(
       Control hitTestArea,
@@ -144,6 +156,24 @@ public sealed class SwipeOpenGestureHandler : IDisposable
    }
 
    /// <summary>
+   /// True if the pointer went down on a control that uses horizontal drags itself
+   /// (moving the caret or selecting text, sliders, scroll bars, splitters) or one marked with <see cref="IsSwipeExcludedProperty"/>
+   /// </summary>
+   private bool IsInsideDragOwningControl(Visual? source)
+   {
+      for (var visual = source; visual != null && visual != _hitTestArea; visual = visual.GetVisualParent())
+      {
+         if (visual is TextBox or SelectableTextBlock or Slider or ScrollBar or Thumb)
+            return true;
+
+         if (GetIsSwipeExcluded(visual))
+            return true;
+      }
+
+      return false;
+   }
+
+   /// <summary>
    /// True while a descendant scrolled within the last <see cref="ScrollCooldownMs"/> ms
    /// </summary>
    private bool RecentlyScrolled =>
@@ -201,6 +231,12 @@ public sealed class SwipeOpenGestureHandler : IDisposable
 
       // Never run the swipe gesture while a popup/flyout is open
       if (IsPopupOpen())
+      {
+         return;
+      }
+
+      // A drag inside e.g. a TextBox moves the caret or selects text, it is not a swipe
+      if (IsInsideDragOwningControl(e.Source as Visual))
       {
          return;
       }
