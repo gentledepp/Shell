@@ -675,6 +675,14 @@ public partial class ShellView : TemplatedControl, INavigationBarProvider
 
     private void SplitViewOnPaneClosing(object? sender, CancelRoutedEventArgs e)
     {
+        // PaneClosing bubbles: a page's own pane (e.g. a checklist's chapters) closing is not the side menu closing
+        if (e.Source != _splitView)
+            return;
+
+        // nor is the shell hiding the side menu for the page it shows (see UpdateSideMenu)
+        if (_updatingSideMenu)
+            return;
+
         if (_sideMenuSwipeHandler is { IsGestureActive: true })
         {
             e.Cancel = true;

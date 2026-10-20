@@ -62,6 +62,25 @@ public partial class ShellView
 
 	#endregion
 
+	#region CanToggleSideMenu
+
+	private bool _canToggleSideMenu = true;
+	public static readonly DirectProperty<ShellView, bool> CanToggleSideMenuProperty =
+		AvaloniaProperty.RegisterDirect<ShellView, bool>(
+			nameof(CanToggleSideMenu),
+			o => o.CanToggleSideMenu);
+
+	/// <summary>
+	/// Gets whether the side menu can be opened and closed on the page the shell shows
+	/// </summary>
+	public bool CanToggleSideMenu
+	{
+		get => _canToggleSideMenu;
+		private set => SetAndRaise(CanToggleSideMenuProperty, ref _canToggleSideMenu, value);
+	}
+
+	#endregion
+
 	#region LargeScreenSideMenuBehave
 
 	private SideMenuBehaveType _largeScreenSideMenuBehave = SideMenuBehaveType.Keep;
@@ -301,9 +320,27 @@ public partial class ShellView
 		return Task.CompletedTask;
 	}
 
+	/// <summary>Set while <see cref="UpdateSideMenu"/> shows or hides the pane for the current page.</summary>
+	private bool _updatingSideMenu;
+
 	internal virtual void UpdateSideMenu()
 	{
-		if (_splitView == null || NavigationBar == null) return;
+		// if we navigate to a page without a side menu, that shouldn't be treated as the user closing the side menu
+		// the side menu should still be open when we navigate back to the page with the side menu
+		_updatingSideMenu = true;
+		try
+		{
+			ApplySideMenu();
+		}
+		finally
+		{
+			_updatingSideMenu = false;
+		}
+	}
+
+	private void ApplySideMenu()
+	{
+		if (_splitView == null) return;
 
 		// Check if current page has local pane content
 		if (_contentView?.CurrentView is Page page && page.Pane != null)
@@ -311,7 +348,7 @@ public partial class ShellView
 			// Hide global side menu completely when page has its own pane
 			_splitView.OpenPaneLength = 0;
 			_splitView.SetCurrentValue(SplitView.IsPaneOpenProperty, false);
-			NavigationBar.HasSideMenuOption = false;
+			CanToggleSideMenu = false;
 			return;
 		}
 
@@ -320,23 +357,23 @@ public partial class ShellView
 			case SideMenuBehaveType.Default:
 				_splitView.OpenPaneLength = SideMenuPresented ? SideMenuSize : 0;
 				_splitView.SetCurrentValue(SplitView.IsPaneOpenProperty, SideMenuPresented);
-				NavigationBar.HasSideMenuOption = true;
+				CanToggleSideMenu = true;
 				break;
 			case SideMenuBehaveType.Keep:
 				_splitView.OpenPaneLength = SideMenuSize;
 				_splitView.SetCurrentValue(SplitView.IsPaneOpenProperty, true);
-				NavigationBar.HasSideMenuOption = false;
+				CanToggleSideMenu = false;
 				break;
 			case SideMenuBehaveType.Closed:
 				_splitView.OpenPaneLength = 0;
 				_splitView.SetCurrentValue(SplitView.IsPaneOpenProperty, true);
-				NavigationBar.HasSideMenuOption = true;
+				CanToggleSideMenu = true;
 				break;
             case SideMenuBehaveType.Removed:
 				_splitView.OpenPaneLength = 0;
 				_splitView.CompactPaneLength = 0;
                 _splitView.SetCurrentValue(SplitView.IsPaneOpenProperty, false);
-                NavigationBar.HasSideMenuOption = false;
+                CanToggleSideMenu = false;
                 break;
         }
 	}

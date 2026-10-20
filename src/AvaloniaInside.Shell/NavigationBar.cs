@@ -23,12 +23,21 @@ public class NavigationBar : TemplatedControl
 	public NavigationBar(ShellView shellView)
 	{
 		ShellView = shellView;
+		FollowSideMenuOption();
 	}
 
 	public NavigationBar(Page page)
 	{
 		Page = page;
 		ShellView = page.Shell;
+		FollowSideMenuOption();
+	}
+
+	// the shell decides, for the page it shows, whether there is a side menu button
+	private void FollowSideMenuOption()
+	{
+		if (ShellView is { } shell)
+			Bind(HasSideMenuOptionProperty, shell.GetObservable(Shell.ShellView.CanToggleSideMenuProperty));
 	}
 
 	#region ShellView
